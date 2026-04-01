@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    /* Mise en page des fichiers */
+    "rootDir": "./src",                         /* Où est ton code TS */
+    "outDir": "./dist",                        /* Où ira le code JS compilé */
+
+    /* Paramètres Environnement */
+    "module": "NodeNext",                      /* Indispensable pour Node moderne */
+    "moduleResolution": "NodeNext",
+    "target": "ESNext",                        /* On utilise le JS le plus récent */
+    "sourceMap": true,                         /* Utile pour le debug (lie le JS au TS) */
+    
+    /* Strict (Sécurité) */
+    "strict": true,                            /* Active toutes les vérifications de type */
+    "noUncheckedIndexedAccess": true,          /* Évite les erreurs sur les tableaux/objets */
+    "skipLibCheck": true,                      /* Ne vérifie pas les erreurs dans node_modules */
+    
+    /* Interopérabilité */
+    "esModuleInterop": true,                   /* Permet d'importer Express normalement */
+    "forceConsistentCasingInFileNames": true,  /* Important si tu travailles en équipe */
+    
+    /* Alias (Bonus pour plus tard) */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src/**/*"],                     /* Compiler tout ce qui est dans src */
+  "exclude": ["node_modules", "dist"]          /* Ignorer ces dossiers */
+}

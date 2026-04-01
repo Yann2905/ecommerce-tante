@@ -1,0 +1,16 @@
+{
+    "name": "ecommerce-tante",
+    "version": "1.0.0",
+    "description": "Projet E-commerce complet",
+    "main": "index.js",
+    "scripts": {
+        "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\""
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@supabase/ssr": "^0.10.0",
+        "concurrently": "^9.2.1"
+    }
+}
