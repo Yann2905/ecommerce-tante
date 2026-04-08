@@ -17,7 +17,7 @@ app.use(cors());
 app.use(express.json()); // Indispensable pour lire le JSON des commandes
 
 // ✅ ENREGISTREMENT DES ROUTES API
-// Route pour la gestion du stock (Mme KANE)
+// Route pour la gestion du stock (Emma-Shop)
 app.use('/api/products', productRoutes);
 
 // Route pour les commandes (Clients & Panier)
@@ -27,7 +27,7 @@ app.use('/api/orders', orderRoutes);
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: "OK", 
-    message: "Le serveur de Mme KANE est en ligne (Produits + Commandes) !" 
+    message: "Le serveur de Emma-Shop est en ligne (Produits + Commandes) !" 
   });
 });
 
@@ -37,7 +37,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`
   ================================================
-  ✅ SERVEUR MME KANE OPÉRATIONNEL : http://localhost:${PORT}
+  ✅ SERVEUR Emma-Shop OPÉRATIONNEL : http://localhost:${PORT}
   📦 MODULE PRODUITS : http://localhost:${PORT}/api/products
   🛒 MODULE COMMANDES: http://localhost:${PORT}/api/orders
   ================================================

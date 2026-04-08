@@ -12,7 +12,7 @@ const router = Router();
 // ✅ Public — tout le monde peut voir les produits
 router.get('/', getAllProducts);
 
-// ✅ Protégé — seule Mme KANE peut modifier
+// ✅ Protégé — seule Emma-Shop peut modifier
 // Note: Assure-toi que ton middleware 'isAdmin' fonctionne bien avec Supabase Auth
 router.post('/', isAdmin, createProduct);
 router.patch('/:id', isAdmin, updateProduct);
