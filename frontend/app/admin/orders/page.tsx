@@ -25,16 +25,16 @@ type Order = {
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: any }> = {
   en_attente: { label: 'En attente', color: '#92400E', bg: '#FEF3C7', icon: Clock },
-  livré:  { label: 'Livré',   color: '#065F46', bg: '#D1FAE5', icon: CheckCircle },
-  annulé:  { label: 'Annulé',  color: '#991B1B', bg: '#FEE2E2', icon: XCircle },
+  livré: { label: 'Livré', color: '#065F46', bg: '#D1FAE5', icon: CheckCircle },
+  annulé: { label: 'Annulé', color: '#991B1B', bg: '#FEE2E2', icon: XCircle },
 };
 
 export default function AdminOrders() {
-  const [orders,       setOrders]       = useState<Order[]>([]);
-  const [loading,      setLoading]      = useState(true);
-  const [selectedOrder,setSelectedOrder]= useState<Order | null>(null);
-  const [updatingId,   setUpdatingId]   = useState<string | null>(null);
-  const [filter,       setFilter]       = useState<'all' | 'en_attente' | 'livré' | 'annulé'>('all');
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'en_attente' | 'livré' | 'annulé'>('all');
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -59,8 +59,14 @@ export default function AdminOrders() {
   };
 
   const contactWhatsApp = (phone: string, name: string) => {
+    // 1. On ne garde que les chiffres (supprime +, espaces, points, etc.)
+    const cleanPhone = phone.replace(/\D/g, '');
+
+    // 2. On s'assure que le message est bien encodé
     const msg = encodeURIComponent(`Bonjour ${name} 👋, c'est Emma-Shop. Je vous contacte concernant votre commande. Merci de votre confiance ! 🌟`);
-    window.open(`https://wa.me/${phone.replace(/\s/g, '')}?text=${msg}`, '_blank');
+
+    // 3. On utilise wa.me avec le numéro propre
+    window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
   };
 
   // ✅ Prix en euros
@@ -70,14 +76,14 @@ export default function AdminOrders() {
   const fmtDate = (d: string) => {
     const date = new Date(d);
     return {
-      day:  date.toLocaleDateString('fr-FR',  { day: '2-digit', month: 'short' }),
-      time: date.toLocaleTimeString('fr-FR',  { hour: '2-digit', minute: '2-digit' }),
+      day: date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
+      time: date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
     };
   };
 
   const filtered = orders.filter(o => filter === 'all' || o.status === filter);
   const stats = {
-    total:   orders.length,
+    total: orders.length,
     en_attente: orders.filter(o => o.status === 'en_attente').length,
     revenue: orders.filter(o => o.status === 'livré').reduce((s, o) => s + o.total_price, 0),
   };
@@ -119,9 +125,9 @@ export default function AdminOrders() {
         {/* ── STATS ── */}
         <div className="grid grid-cols-3 gap-4 mb-10">
           {[
-            { icon: Package,    label: 'Total commandes', value: stats.total,         color: '#2D1B08' },
-            { icon: Clock,      label: 'En attente',        value: stats.en_attente,       color: '#C9A84C', highlight: stats.en_attente > 0 },
-            { icon: TrendingUp, label: 'Chiffre livré',    value: fmt(stats.revenue),  color: '#065F46' },
+            { icon: Package, label: 'Total commandes', value: stats.total, color: '#2D1B08' },
+            { icon: Clock, label: 'En attente', value: stats.en_attente, color: '#C9A84C', highlight: stats.en_attente > 0 },
+            { icon: TrendingUp, label: 'Chiffre livré', value: fmt(stats.revenue), color: '#065F46' },
           ].map(({ icon: Icon, label, value, color, highlight }: any, i) => (
             <motion.div
               key={label}
@@ -189,9 +195,9 @@ export default function AdminOrders() {
                       onClick={() => setSelectedOrder(isSelected ? null : order)}
                       className="relative rounded-3xl border p-5 cursor-pointer transition-all duration-300 group overflow-hidden"
                       style={{
-                        background:   isSelected ? 'linear-gradient(135deg, #2D1B08, #3D2010)' : 'white',
-                        borderColor:  isSelected ? 'transparent' : '#F5E6D3',
-                        boxShadow:    isSelected ? '0 20px 50px rgba(45,27,8,0.25)' : 'none',
+                        background: isSelected ? 'linear-gradient(135deg, #2D1B08, #3D2010)' : 'white',
+                        borderColor: isSelected ? 'transparent' : '#F5E6D3',
+                        boxShadow: isSelected ? '0 20px 50px rgba(45,27,8,0.25)' : 'none',
                       }}
                     >
                       {!isSelected && (
