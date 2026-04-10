@@ -7,10 +7,12 @@ import orderRoutes from './modules/order/order.routes';
 const app: Application = express();
 
 // ✅ CORS restreint à ton frontend uniquement
+// ✅ CONFIGURATION CORS OUVERTE (Indispensable pour mobile)
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  origin: "*", // Autorise TOUTES les sources (PC, Mobile, Tablette)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
 app.use(express.json({ limit: '10kb' })); // ✅ Limite la taille des requêtes
