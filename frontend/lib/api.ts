@@ -1,38 +1,35 @@
 import { supabase } from './supabase';
 
 /**
- * ✅ RÉCUPÉRATION DYNAMIQUE DE L'URL
- * Sur Render, il lira la variable d'environnement (HTTPS).
- * Sur ton PC (en local), il utilisera localhost.
+ * ✅ RÉCUPÉRATION DE L'URL DE BASE
+ * On nettoie les slashes superflus pour éviter les erreurs d'URL.
  */
 const getBaseUrl = () => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
-
   if (envUrl) {
-    // Retire le slash final et l'étoile si présents pour éviter les erreurs d'URL
-    return envUrl.replace(/\/$/, "").replace(/\*$/, "");
+    return envUrl.replace(/\/+$/, ""); // Enlève le(s) slash(es) à la fin
   }
-
   return "http://localhost:5000";
 };
 
 const API_URL = getBaseUrl();
 
 export async function apiCall(endpoint: string, options: any = {}) {
-  // 1. Récupération du Token de session Supabase pour l'authentification
+  // 1. Récupération du Token de session Supabase
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
 
-  // 2. Nettoyage de l'endpoint (on enlève le / au début s'il existe)
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  // 2. Nettoyage de l'endpoint (on enlève le "/" au début et le "api/" s'il est déjà là)
+  const cleanEndpoint = endpoint
+    .replace(/^\/+/, "")        // Enlève les "/" au début
+    .replace(/^api\//i, "");    // Enlève "api/" au début (insensible à la casse)
 
   /**
    * ✅ CONSTRUCTION DE L'URL FINALE
-   * On vérifie si l'API_URL contient déjà "/api". 
-   * Si non, on l'ajoute pour correspondre à tes routes Backend.
+   * On s'assure que "/api" n'apparaît qu'une seule fois.
    */
   let finalUrl = "";
-  if (API_URL.includes("/api")) {
+  if (API_URL.toLowerCase().endsWith("/api")) {
     finalUrl = `${API_URL}/${cleanEndpoint}`;
   } else {
     finalUrl = `${API_URL}/api/${cleanEndpoint}`;
@@ -43,8 +40,7 @@ export async function apiCall(endpoint: string, options: any = {}) {
   try {
     const response = await fetch(finalUrl, {
       ...options,
-      // Force le mode cors pour les navigateurs mobiles
-      mode: 'cors',
+      mode: 'cors', // Crucial pour Safari/iPhone
       headers: {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}` : '',
@@ -52,28 +48,32 @@ export async function apiCall(endpoint: string, options: any = {}) {
       },
     });
 
-    // Cas spécifique où le serveur ne renvoie pas de JSON (ex: erreur 500 brute)
+    // 3. Gestion de la réponse (JSON ou Texte)
     const contentType = response.headers.get("content-type");
     let data;
+
     if (contentType && contentType.includes("application/json")) {
       data = await response.json();
     } else {
-      data = { message: await response.text() };
+      const textData = await response.text();
+      data = { message: textData };
     }
 
     if (!response.ok) {
-      throw new Error(data.error || data.message || `Erreur serveur : ${response.status}`);
+      // Si le serveur renvoie une erreur check constraint (ton image 1)
+      if (data.message?.includes("violates check constraint")) {
+        throw new Error("Données invalides : Vérifiez le statut ou les champs obligatoires.");
+      }
+      throw new Error(data.error || data.message || `Erreur: ${response.status}`);
     }
 
     return data;
   } catch (error: any) {
-    console.error("❌ Erreur apiCall:", error);
+    console.error("❌ Erreur API:", error);
 
-    // Message clair pour le débogage sur téléphone
-    if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
-      throw new Error("Connexion impossible au serveur. Vérifie que le Backend Render est bien démarré (HTTPS) et que les CORS sont ouverts.");
+    if (error.message === 'Failed to fetch') {
+      throw new Error("Impossible de contacter le serveur. Vérifiez votre connexion ou le réveil du backend Render.");
     }
-
     throw error;
   }
 }
