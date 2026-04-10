@@ -14,17 +14,17 @@ const CATEGORIES = [
 ];
 
 export default function ManageProducts() {
-  const [products,    setProducts]    = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [pageLoading, setPageLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading,     setLoading]     = useState(false);
-  const [deletingId,  setDeletingId]  = useState<string | null>(null);
-  const [mainFile,    setMainFile]    = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [mainFile, setMainFile] = useState<File | null>(null);
   const [editProduct, setEditProduct] = useState<any | null>(null);
-  const [search,      setSearch]      = useState('');
-  const [catFilter,   setCatFilter]   = useState<number | 'all'>('all');
-  const [preview,     setPreview]     = useState<string | null>(null);
-  const [formData,    setFormData]    = useState({
+  const [search, setSearch] = useState('');
+  const [catFilter, setCatFilter] = useState<number | 'all'>('all');
+  const [preview, setPreview] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
     name: '', price: 0, stock: 0, description: '',
     category_id: 1, discount_price: '', is_active: true,
   });
@@ -78,15 +78,15 @@ export default function ManageProducts() {
 
       const payload = {
         ...formData,
-        price:          Number(formData.price),
-        stock:          Number(formData.stock),
-        category_id:    Number(formData.category_id),
+        price: Number(formData.price),
+        stock: Number(formData.stock),
+        category_id: Number(formData.category_id),
         discount_price: formData.discount_price ? Number(formData.discount_price) : null,
         image_url,
       };
 
       const method = editProduct ? 'PATCH' : 'POST';
-      const url    = editProduct ? `/api/products/${editProduct.id}` : '/api/products';
+      const url = editProduct ? `/api/products/${editProduct.id}` : '/api/products';
       await apiCall(url, { method, body: JSON.stringify(payload) });
 
       setIsModalOpen(false);
@@ -127,15 +127,15 @@ export default function ManageProducts() {
 
   const filtered = products.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    const matchCat    = catFilter === 'all' || p.category_id === catFilter;
+    const matchCat = catFilter === 'all' || p.category_id === catFilter;
     return matchSearch && matchCat;
   });
 
   const stats = [
-    { label: 'Total',    value: products.length,                            color: '#2D1B08' },
-    { label: 'Visibles', value: products.filter(p => p.is_active).length,  color: '#065F46' },
-    { label: 'Masqués',  value: products.filter(p => !p.is_active).length, color: '#92400E' },
-    { label: 'Rupture',  value: products.filter(p => p.stock === 0).length, color: '#991B1B' },
+    { label: 'Total', value: products.length, color: '#2D1B08' },
+    { label: 'Visibles', value: products.filter(p => p.is_active).length, color: '#065F46' },
+    { label: 'Masqués', value: products.filter(p => !p.is_active).length, color: '#92400E' },
+    { label: 'Rupture', value: products.filter(p => p.stock === 0).length, color: '#991B1B' },
   ];
 
   return (
@@ -143,18 +143,30 @@ export default function ManageProducts() {
 
       {/* ── TOP HEADER ── */}
       <div className="border-b border-[#F5E6D3] sticky top-0 z-40 bg-[#FFFDFB]/95 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between gap-6">
-          <div>
-            <h1 className="text-4xl font-black tracking-tighter text-[#2D1B08]">
-              STOCK<span className="text-[#B48446]">.</span>
-            </h1>
-            <p className="text-[9px] font-black uppercase tracking-[0.28em] text-[#8B5E34]/50 mt-0.5">
-              Gestion des articles
-            </p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-4 sm:py-5">
+          {/* Ligne 1 : logo + bouton */}
+          <div className="flex items-center justify-between gap-4 mb-3 sm:mb-0">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-black tracking-tighter text-[#2D1B08]">
+                STOCK<span className="text-[#B48446]">.</span>
+              </h1>
+              <p className="text-[9px] font-black uppercase tracking-[0.28em] text-[#8B5E34]/50 mt-0.5">
+                Gestion des articles
+              </p>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+              onClick={openAdd}
+              className="bg-[#2D1B08] text-white px-5 sm:px-7 py-3 sm:py-3.5 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2 shadow-xl shrink-0"
+            >
+              <Plus size={16} />
+              <span className="hidden xs:inline">Ajouter</span>
+            </motion.button>
           </div>
 
-          {/* Search */}
-          <div className="flex-1 max-w-sm relative">
+          {/* Ligne 2 : recherche (pleine largeur sur mobile) */}
+          <div className="relative sm:max-w-sm sm:mt-0 mt-0">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C9A84C]/50" size={15} />
             <input
               type="text" placeholder="Rechercher un article..."
@@ -162,40 +174,39 @@ export default function ManageProducts() {
               onChange={e => setSearch(e.target.value)}
             />
           </div>
-
-          <motion.button
-            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-            onClick={openAdd}
-            className="bg-[#2D1B08] text-white px-7 py-3.5 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2 shadow-xl shrink-0"
-          >
-            <Plus size={16} /> Ajouter
-          </motion.button>
         </div>
+
+        {/* Sur desktop, réorganise en une ligne */}
+        <style>{`
+          @media (min-width: 640px) {
+            .header-inner { flex-direction: row; align-items: center; }
+          }
+        `}</style>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-6 sm:py-10">
 
         {/* ── STATS ── */}
-        <div className="grid grid-cols-4 gap-4 mb-10">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8 sm:mb-10">
           {stats.map((s, i) => (
             <motion.div
               key={s.label}
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
-              className="bg-white border border-[#F5E6D3] rounded-3xl p-5"
+              className="bg-white border border-[#F5E6D3] rounded-3xl p-4 sm:p-5"
             >
               <p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#8B5E34]/50 mb-2">{s.label}</p>
-              <p className="text-4xl font-black" style={{ color: s.color }}>{s.value}</p>
+              <p className="text-3xl sm:text-4xl font-black" style={{ color: s.color }}>{s.value}</p>
             </motion.div>
           ))}
         </div>
 
         {/* ── CATEGORY FILTERS ── */}
-        <div className="flex gap-2 mb-8 flex-wrap">
+        <div className="flex gap-2 mb-6 sm:mb-8 overflow-x-auto pb-2 scrollbar-hide flex-nowrap">
           {[{ id: 'all', name: 'Tous' }, ...CATEGORIES].map(c => (
             <button
               key={c.id}
               onClick={() => setCatFilter(c.id as any)}
-              className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${catFilter === c.id ? 'bg-[#2D1B08] text-white shadow-lg' : 'border border-[#EAD8C0] text-[#8B5E34] bg-white hover:border-[#C9A84C]/40'}`}
+              className={`px-4 sm:px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap shrink-0 ${catFilter === c.id ? 'bg-[#2D1B08] text-white shadow-lg' : 'border border-[#EAD8C0] text-[#8B5E34] bg-white hover:border-[#C9A84C]/40'}`}
             >
               {c.name}
             </button>
@@ -213,14 +224,14 @@ export default function ManageProducts() {
             <p className="text-[#8B5E34] italic font-medium opacity-60">Aucun article trouvé</p>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
             <AnimatePresence>
               {filtered.map((p, i) => (
                 <motion.div
                   key={p.id} layout
                   initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: i * 0.05, type: 'spring', damping: 22 }}
-                  className={`group bg-white rounded-[2.5rem] border overflow-hidden transition-all hover:shadow-2xl ${p.is_active ? 'border-[#F5E6D3]' : 'border-dashed border-[#EAD8C0] opacity-60'}`}
+                  className={`group bg-white rounded-[2rem] sm:rounded-[2.5rem] border overflow-hidden transition-all hover:shadow-2xl ${p.is_active ? 'border-[#F5E6D3]' : 'border-dashed border-[#EAD8C0] opacity-60'}`}
                 >
                   {/* Image */}
                   <div className="relative aspect-[4/3] overflow-hidden bg-[#FDF8F2]">
@@ -228,8 +239,9 @@ export default function ManageProducts() {
                       ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       : <div className="w-full h-full flex items-center justify-center text-5xl">👗</div>
                     }
-                    {/* Overlay actions on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0800]/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-5 gap-2">
+
+                    {/* Overlay actions on hover — sur mobile toujours visible */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0800]/80 to-transparent sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity duration-300 flex items-end p-4 sm:p-5 gap-2">
                       <motion.button
                         whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}
                         onClick={() => openEdit(p)}
@@ -284,14 +296,14 @@ export default function ManageProducts() {
                   </div>
 
                   {/* Info */}
-                  <div className="p-6">
+                  <div className="p-4 sm:p-6">
                     <div className="flex items-start justify-between gap-2 mb-3">
                       <div className="min-w-0">
                         <p className="text-[8px] font-black uppercase tracking-[0.22em] text-[#C9A84C]/70 mb-1">{catName(p)}</p>
-                        <h3 className="font-serif font-black italic text-lg text-[#2D1B08] leading-tight truncate">{p.name}</h3>
+                        <h3 className="font-serif font-black italic text-base sm:text-lg text-[#2D1B08] leading-tight truncate">{p.name}</h3>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-xl font-black text-[#B48446]">{fmt(p.price)}</p>
+                        <p className="text-lg sm:text-xl font-black text-[#B48446]">{fmt(p.price)}</p>
                         {p.discount_price && (
                           <p className="text-xs text-[#8B5E34]/40 line-through">{fmt(p.discount_price)}</p>
                         )}
@@ -316,8 +328,8 @@ export default function ManageProducts() {
                             background: p.stock === 0
                               ? '#EF4444'
                               : p.stock <= 3
-                              ? '#F97316'
-                              : 'linear-gradient(90deg, #C9A84C, #E8C56A)',
+                                ? '#F97316'
+                                : 'linear-gradient(90deg, #C9A84C, #E8C56A)',
                           }}
                         />
                       </div>
@@ -333,27 +345,43 @@ export default function ManageProducts() {
       {/* ── MODALE ── */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => !loading && setIsModalOpen(false)}
               className="absolute inset-0 bg-[#1A0800]/75 backdrop-blur-xl"
             />
             <motion.div
-              initial={{ y: 40, opacity: 0, scale: 0.97 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 40, opacity: 0, scale: 0.97 }}
-              transition={{ type: 'spring', damping: 24 }}
-              className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto scrollbar-hide"
-              style={{ background: '#FFFDFB', borderRadius: 48, boxShadow: '0 40px 100px rgba(10,4,0,.5)' }}
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '100%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 28 }}
+              className="relative w-full sm:max-w-2xl max-h-[95vh] overflow-y-auto scrollbar-hide"
+              style={{
+                background: '#FFFDFB',
+                borderRadius: '2.5rem 2.5rem 0 0',
+                boxShadow: '0 40px 100px rgba(10,4,0,.5)',
+              }}
             >
+              {/* Barre de drag sur mobile */}
+              <div className="flex justify-center pt-3 sm:hidden">
+                <div className="w-10 h-1 rounded-full bg-[#EAD8C0]" />
+              </div>
+
+              {/* Sur tablette/desktop, coins arrondis partout */}
+              <style>{`
+                @media (min-width: 640px) {
+                  .modal-inner { border-radius: 3rem !important; }
+                }
+              `}</style>
+
               {/* Modal header */}
-              <div className="p-10 pb-0 flex items-start justify-between">
+              <div className="p-6 sm:p-10 pb-0 flex items-start justify-between">
                 <div>
                   <p className="text-[9px] font-black uppercase tracking-[0.32em] text-[#C9A84C] mb-2">
                     {editProduct ? '✦ Modification' : '✦ Nouveau'}
                   </p>
-                  <h2 className="text-4xl font-black tracking-tighter text-[#2D1B08] italic">
+                  <h2 className="text-3xl sm:text-4xl font-black tracking-tighter text-[#2D1B08] italic">
                     {editProduct ? editProduct.name.toUpperCase().slice(0, 18) + (editProduct.name.length > 18 ? '…' : '') + '.' : 'AJOUTER.'}
                   </h2>
                 </div>
@@ -365,7 +393,7 @@ export default function ManageProducts() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-10 space-y-5">
+              <form onSubmit={handleSubmit} className="p-6 sm:p-10 space-y-5">
 
                 {/* Preview image */}
                 <label className="block cursor-pointer group/img">
@@ -381,8 +409,8 @@ export default function ManageProducts() {
                     ) : (
                       <div className="aspect-video flex flex-col items-center justify-center gap-3">
                         <div className="text-4xl">📷</div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-[#8B5E34]">
-                          Cliquer pour ajouter une image
+                        <span className="text-[10px] font-black uppercase tracking-widest text-[#8B5E34] text-center px-4">
+                          Appuyer pour ajouter une image
                         </span>
                       </div>
                     )}
@@ -414,7 +442,7 @@ export default function ManageProducts() {
                 </div>
 
                 {/* Prix + Stock */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8B5E34]/60 mb-2 block">Prix *</label>
                     <div className="relative">
@@ -469,15 +497,15 @@ export default function ManageProducts() {
                   onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}
                   className="flex items-center justify-between p-4 bg-[#FDF8F2] rounded-2xl cursor-pointer hover:bg-[#F5E6D3]/60 transition-colors"
                 >
-                  <div>
+                  <div className="pr-3">
                     <p className="text-sm font-black text-[#2D1B08]">
                       {formData.is_active ? 'Visible sur la boutique' : 'Masqué (brouillon)'}
                     </p>
                     <p className="text-[10px] text-[#8B5E34]/60 font-medium mt-0.5">
-                      {formData.is_active ? 'Les clientes peuvent voir et commander cet article' : 'Cet article n\'apparaît pas sur la boutique'}
+                      {formData.is_active ? 'Les clientes peuvent voir et commander cet article' : "Cet article n'apparaît pas sur la boutique"}
                     </p>
                   </div>
-                  <div className={`w-12 h-6 rounded-full transition-all relative shrink-0 ml-4 ${formData.is_active ? 'bg-[#C9A84C]' : 'bg-[#EAD8C0]'}`}>
+                  <div className={`w-12 h-6 rounded-full transition-all relative shrink-0 ${formData.is_active ? 'bg-[#C9A84C]' : 'bg-[#EAD8C0]'}`}>
                     <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all shadow-sm ${formData.is_active ? 'left-6' : 'left-0.5'}`} />
                   </div>
                 </div>
@@ -494,6 +522,9 @@ export default function ManageProducts() {
                     : editProduct ? '✓ Enregistrer les modifications' : '✓ Mettre en vente'
                   }
                 </motion.button>
+
+                {/* Espace bas pour éviter que le bouton soit caché par la barre nav mobile */}
+                <div className="h-4 sm:h-0" />
               </form>
             </motion.div>
           </div>

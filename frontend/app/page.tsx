@@ -9,7 +9,6 @@ import { supabase } from '@/lib/supabase';
 import { useCart } from '@/lib/store';
 import Link from 'next/link';
 
-// ─── INDICATIFS PAYS ─────────────────────────────────────────────────────────
 const COUNTRY_CODES = [
   { code: '225', flag: '🇨🇮', label: "Côte d'Ivoire" },
   { code: '33', flag: '🇫🇷', label: 'France' },
@@ -30,7 +29,6 @@ const COUNTRY_CODES = [
   { code: '1', flag: '🇺🇸', label: 'États-Unis' },
 ];
 
-// Europe : on supprime le 0 initial. Afrique et reste : on garde tel quel.
 const EURO_PREFIXES = ['33', '377', '352', '32', '41', '49', '34', '44'];
 
 const formatToE164 = (dialCode: string, localNumber: string): string => {
@@ -69,13 +67,13 @@ const Toast = ({ message, onClose }: { message: string; onClose: () => void }) =
   <motion.div
     initial={{ y: 80, opacity: 0, scale: 0.9 }} animate={{ y: 0, opacity: 1, scale: 1 }}
     exit={{ y: 80, opacity: 0, scale: 0.9 }} transition={{ type: 'spring', damping: 20 }}
-    className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border"
+    className="fixed bottom-24 sm:bottom-8 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-[999] flex items-center gap-3 px-5 sm:px-6 py-4 rounded-2xl shadow-2xl border"
     style={{ background: '#1A0800', borderColor: '#C9A84C33' }}
   >
     <motion.div animate={{ rotate: [0, 15, -15, 0] }} transition={{ duration: 0.5 }}>
       <CheckCircle2 size={18} className="text-[#C9A84C]" />
     </motion.div>
-    <span className="text-[#FFFDFB] text-sm font-bold">{message}</span>
+    <span className="text-[#FFFDFB] text-sm font-bold flex-1">{message}</span>
     <button onClick={onClose} className="text-[#8B5E34] hover:text-[#C9A84C] transition-colors ml-2">
       <X size={14} />
     </button>
@@ -102,33 +100,40 @@ const ProductDetails = ({ product, isOpen, onClose, addItem }: any) => {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center p-0 sm:p-4">
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose} className="absolute inset-0 backdrop-blur-xl"
             style={{ background: 'rgba(10,4,0,0.85)' }} />
+
+          {/* Drag indicator on mobile */}
           <motion.div
-            initial={{ scale: 0.85, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.85, opacity: 0, y: 40 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="relative w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-[3rem] shadow-2xl grid grid-cols-1 lg:grid-cols-2"
+            initial={{ y: '100%', opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
+            transition={{ type: 'spring', damping: 28 }}
+            className="relative w-full sm:max-w-5xl max-h-[95vh] sm:max-h-[92vh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[3rem] shadow-2xl flex flex-col sm:grid sm:grid-cols-2"
             style={{ background: '#FFFDFB' }}
           >
+            {/* Barre drag mobile */}
+            <div className="flex justify-center pt-3 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-[#EAD8C0]" />
+            </div>
+
             <motion.button whileHover={{ scale: 1.1, rotate: 90 }} onClick={onClose}
-              className="absolute top-5 right-5 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center border border-[#F5E6D3]">
+              className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center border border-[#F5E6D3]">
               <X size={18} className="text-[#5C3D2E]" />
             </motion.button>
 
             {/* Images */}
-            <div className="p-8 space-y-4" style={{ background: 'linear-gradient(135deg, #FDF8F2, #FAF0E6)' }}>
+            <div className="p-4 sm:p-8 space-y-4" style={{ background: 'linear-gradient(135deg, #FDF8F2, #FAF0E6)' }}>
               <motion.div key={activeImg} initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 1, scale: 1 }}
-                className="aspect-[4/5] rounded-[2rem] overflow-hidden border-4 border-white shadow-xl">
+                className="aspect-[4/3] sm:aspect-[4/5] rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden border-4 border-white shadow-xl">
                 <img src={activeImg} className="w-full h-full object-cover" alt={product.name} />
               </motion.div>
               {gallery.length > 1 && (
                 <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
                   {gallery.map((img: string, i: number) => (
                     <motion.button key={i} whileHover={{ scale: 1.08 }} onClick={() => setActiveImg(img)}
-                      className={`w-16 h-16 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${activeImg === img ? 'border-[#C9A84C] shadow-lg' : 'border-transparent opacity-50 hover:opacity-90'}`}>
+                      className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${activeImg === img ? 'border-[#C9A84C] shadow-lg' : 'border-transparent opacity-50 hover:opacity-90'}`}>
                       <img src={img} className="w-full h-full object-cover" />
                     </motion.button>
                   ))}
@@ -137,20 +142,20 @@ const ProductDetails = ({ product, isOpen, onClose, addItem }: any) => {
             </div>
 
             {/* Info */}
-            <div className="p-10 flex flex-col justify-center bg-white">
+            <div className="p-6 sm:p-10 flex flex-col justify-center bg-white">
               <motion.span initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
                 className="text-[#C9A84C] font-black uppercase tracking-[0.35em] text-[10px] mb-4 flex items-center gap-2">
                 <Sparkles size={10} /> Collection Privée Emma-Shop
               </motion.span>
               <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-                className="text-4xl font-serif font-black text-[#1A0800] mb-3 leading-tight">{product.name}</motion.h2>
+                className="text-2xl sm:text-4xl font-serif font-black text-[#1A0800] mb-3 leading-tight">{product.name}</motion.h2>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
                 className="flex items-baseline gap-3 mb-4">
-                <span className="text-4xl font-black text-[#C9A84C]">{product.price} €</span>
-                {product.discount_price && <span className="text-xl text-[#B48446]/40 line-through">{product.discount_price} €</span>}
+                <span className="text-3xl sm:text-4xl font-black text-[#C9A84C]">{product.price} €</span>
+                {product.discount_price && <span className="text-lg sm:text-xl text-[#B48446]/40 line-through">{product.discount_price} €</span>}
               </motion.div>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.12 }}
-                className="flex items-center gap-2 mb-6">
+                className="flex items-center gap-2 mb-4 sm:mb-6">
                 <div className={`w-2 h-2 rounded-full ${product.stock > 5 ? 'bg-green-400' : product.stock > 0 ? 'bg-yellow-400' : 'bg-red-400'}`} />
                 <span className="text-xs font-bold text-[#8B5E34]">
                   {product.stock > 5 ? 'En stock' : product.stock > 0 ? `Plus que ${product.stock} disponibles` : 'Épuisé'}
@@ -158,19 +163,22 @@ const ProductDetails = ({ product, isOpen, onClose, addItem }: any) => {
               </motion.div>
               {product.description && (
                 <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
-                  className="text-[#5C3D2E] leading-relaxed italic text-base opacity-80 mb-8 border-t border-[#F5E6D3] pt-6">
+                  className="text-[#5C3D2E] leading-relaxed italic text-sm sm:text-base opacity-80 mb-6 sm:mb-8 border-t border-[#F5E6D3] pt-4 sm:pt-6">
                   {product.description}
                 </motion.p>
               )}
               <motion.button whileHover={{ scale: 1.02, backgroundColor: '#8B5E34' }} whileTap={{ scale: 0.97 }}
                 onClick={handleAdd} disabled={adding || product.stock === 0}
-                className="w-full text-white py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl flex items-center justify-center gap-3 disabled:opacity-50 transition-colors"
+                className="w-full text-white py-4 sm:py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl flex items-center justify-center gap-3 disabled:opacity-50 transition-colors"
                 style={{ background: '#2D1B08' }}>
                 {adding
                   ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}><Loader2 size={20} /></motion.div>
                   : <><ShoppingCart size={20} /><span>{product.stock === 0 ? 'Épuisé' : 'Ajouter au panier'}</span></>
                 }
               </motion.button>
+
+              {/* Safe area bottom on mobile */}
+              <div className="h-4 sm:h-0" />
             </div>
           </motion.div>
         </div>
@@ -184,11 +192,9 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
   const { items, totalPrice, removeItem, clearCart } = useCart();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [dialCode, setDialCode] = useState('225'); // Côte d'Ivoire par défaut
+  const [dialCode, setDialCode] = useState('225');
   const [customer, setCustomer] = useState({ name: '', localPhone: '', address: '' });
 
-  // ✅ Supabase direct — plus d'Express, try/catch/finally garanti
-  // ✅ Supabase direct — plus d'Express, try/catch/finally garanti
   const handleOrder = async () => {
     if (!customer.name.trim() || !customer.localPhone.trim()) {
       return alert('Veuillez remplir votre nom et téléphone');
@@ -197,7 +203,6 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
     try {
       const e164Phone = formatToE164(dialCode, customer.localPhone);
 
-      // 1. Créer la commande
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert([{
@@ -205,14 +210,12 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
           customer_phone: e164Phone,
           delivery_address: customer.address.trim(),
           total_price: totalPrice(),
-
         }])
         .select()
         .single();
 
       if (orderError) throw orderError;
 
-      // 2. Insérer les articles
       const { error: itemsError } = await supabase
         .from('order_items')
         .insert(items.map(i => ({
@@ -224,7 +227,6 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
 
       if (itemsError) throw itemsError;
 
-      // 3. Décrémenter le stock
       for (const item of items) {
         await supabase.rpc('decrement_stock', {
           product_id: item.id,
@@ -238,10 +240,10 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
       console.error('Erreur commande:', err);
       alert(err.message || 'Erreur lors de la commande. Veuillez réessayer.');
     } finally {
-      // ✅ Toujours appelé — jamais de chargement infini
       setLoading(false);
     }
   };
+
   const inputCls = "w-full p-4 rounded-2xl border font-medium text-sm outline-none transition-all focus:border-[#C9A84C] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.12)]";
 
   return (
@@ -252,13 +254,14 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
             onClick={onClose} className="fixed inset-0 z-[100]"
             style={{ background: 'rgba(10,4,0,0.65)', backdropFilter: 'blur(8px)' }} />
 
-          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+          <motion.div
+            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-            className="fixed right-0 top-0 h-full w-full max-w-md z-[101] flex flex-col text-[#2D1B08] shadow-2xl"
+            className="fixed right-0 top-0 h-full w-full max-w-full sm:max-w-md z-[101] flex flex-col text-[#2D1B08] shadow-2xl"
             style={{ background: '#FFFDFB' }}>
 
             {/* Header */}
-            <div className="p-6 flex justify-between items-center border-b border-[#EAD8C0]"
+            <div className="p-5 sm:p-6 flex justify-between items-center border-b border-[#EAD8C0]"
               style={{ background: 'linear-gradient(135deg, #2D1B08, #4A2810)' }}>
               <div>
                 <h2 className="text-xl font-serif font-black text-[#FFFDFB] italic">Mon Panier</h2>
@@ -281,12 +284,12 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-hide">
               <AnimatePresence mode="wait">
 
                 {/* ÉTAPE 1 — Panier */}
                 {step === 1 && (
-                  <motion.div key="cart" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-4">
+                  <motion.div key="cart" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-3 sm:space-y-4">
                     {items.length === 0 ? (
                       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-20 text-center">
                         <motion.div animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="text-5xl mb-4">🛍️</motion.div>
@@ -296,9 +299,9 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
                     ) : items.map((item, idx) => (
                       <motion.div key={item.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, x: -100 }} transition={{ delay: idx * 0.05 }}
-                        className="flex gap-4 p-4 rounded-2xl border border-[#F5E6D3] bg-white group hover:border-[#C9A84C]/40 transition-all hover:shadow-md">
-                        <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-[#F5E6D3]">
-                          <img src={item.image_url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={item.name} />
+                        className="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl border border-[#F5E6D3] bg-white group hover:border-[#C9A84C]/40 transition-all hover:shadow-md">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden shrink-0 border border-[#F5E6D3]">
+                          <img src={item.image_url} className="w-full h-full object-cover" alt={item.name} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="font-black text-xs uppercase truncate text-[#2D1B08]">{item.name}</h4>
@@ -317,7 +320,7 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
                 {/* ÉTAPE 2 — Livraison */}
                 {step === 2 && (
                   <motion.div key="delivery" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                    <h3 className="font-black text-lg text-[#2D1B08] mb-6 font-serif italic">Détails de livraison</h3>
+                    <h3 className="font-black text-lg text-[#2D1B08] mb-4 font-serif italic">Détails de livraison</h3>
 
                     {/* Nom */}
                     <div>
@@ -327,34 +330,32 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
                         onChange={e => setCustomer({ ...customer, name: e.target.value })} />
                     </div>
 
-                    {/* ✅ WhatsApp — indicatif + numéro local */}
+                    {/* WhatsApp — indicatif + numéro local */}
                     <div>
                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8B5E34] mb-2 block pl-1">WhatsApp *</label>
                       <div className="flex gap-2 items-stretch">
-                        {/* Select pays */}
-                        <div className="relative shrink-0">
+                        {/* Select pays — largeur fixe pour ne pas déborder */}
+                        <div className="relative shrink-0" style={{ width: 110 }}>
                           <select
                             value={dialCode}
                             onChange={e => setDialCode(e.target.value)}
-                            className="h-full appearance-none pl-3 pr-8 py-4 rounded-2xl border border-[#EAD8C0] bg-[#FDF8F2] font-bold text-sm outline-none focus:border-[#C9A84C] transition-colors cursor-pointer"
-                            style={{ minWidth: 108 }}
+                            className="w-full h-full appearance-none pl-2 pr-6 py-4 rounded-2xl border border-[#EAD8C0] bg-[#FDF8F2] font-bold text-sm outline-none focus:border-[#C9A84C] transition-colors cursor-pointer"
                           >
                             {COUNTRY_CODES.map(c => (
                               <option key={c.code} value={c.code}>{c.flag} +{c.code}</option>
                             ))}
                           </select>
-                          <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#C9A84C] text-[10px]">▾</div>
+                          <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#C9A84C] text-[10px]">▾</div>
                         </div>
-                        {/* Numéro local */}
+                        {/* Numéro local — min-w-0 pour ne pas dépasser */}
                         <input
                           type="tel"
                           placeholder={dialCode === '33' ? '06 12 34 56 78' : '07 00 00 00 00'}
-                          className={`${inputCls} flex-1`}
+                          className={`${inputCls} flex-1 min-w-0`}
                           style={{ background: '#FDF8F2', borderColor: '#EAD8C0' }}
                           onChange={e => setCustomer({ ...customer, localPhone: e.target.value })}
                         />
                       </div>
-                      {/* Aperçu du numéro formaté */}
                       <AnimatePresence>
                         {customer.localPhone.replace(/\D/g, '').length >= 6 && (
                           <motion.p
@@ -419,8 +420,9 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
             {/* Footer panier */}
             {items.length > 0 && step < 3 && (
               <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-                className="p-6 border-t border-[#EAD8C0] bg-white">
-                <div className="flex justify-between items-end mb-5 px-1">
+                className="p-4 sm:p-6 border-t border-[#EAD8C0] bg-white"
+                style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+                <div className="flex justify-between items-end mb-4 px-1">
                   <span className="text-[10px] font-black uppercase tracking-widest text-[#8B5E34]/60">Total</span>
                   <motion.span key={totalPrice()} initial={{ scale: 1.2 }} animate={{ scale: 1 }}
                     className="text-3xl font-black text-[#2D1B08]">{totalPrice()} €</motion.span>
@@ -428,9 +430,8 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
                 <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                   onClick={() => step === 1 ? setStep(2) : handleOrder()}
                   disabled={loading}
-                  className="w-full py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] text-white shadow-xl flex items-center justify-center gap-3 relative overflow-hidden disabled:opacity-70"
+                  className="w-full py-4 sm:py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] text-white shadow-xl flex items-center justify-center gap-3 relative overflow-hidden disabled:opacity-70"
                   style={{ background: 'linear-gradient(135deg, #8B5E34, #C9A84C)' }}>
-                  {/* Shimmer */}
                   <motion.div className="absolute inset-0 opacity-30"
                     style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)' }}
                     animate={{ x: ['-100%', '100%'] }} transition={{ repeat: Infinity, duration: 2, ease: 'linear' }} />
@@ -441,7 +442,7 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
                 </motion.button>
                 {step === 2 && (
                   <button onClick={() => setStep(1)}
-                    className="w-full mt-3 text-[10px] font-bold uppercase tracking-widest text-[#8B5E34]/60 hover:text-[#8B5E34] transition-colors">
+                    className="w-full mt-3 text-[10px] font-bold uppercase tracking-widest text-[#8B5E34]/60 hover:text-[#8B5E34] transition-colors py-2">
                     ← Retour au panier
                   </button>
                 )}
@@ -517,11 +518,11 @@ export default function Home() {
 
       {/* ── NAVBAR ── */}
       <motion.nav initial={{ y: -80 }} animate={{ y: 0 }} transition={{ type: 'spring', damping: 20 }}
-        className="fixed top-0 left-0 w-full z-[90] border-b px-4"
+        className="fixed top-0 left-0 w-full z-[90] border-b px-4 sm:px-6"
         style={{ background: 'rgba(255,253,251,0.92)', backdropFilter: 'blur(20px)', borderColor: '#F5E6D3', boxShadow: '0 4px 30px rgba(45,27,8,0.06)' }}>
-        <div className="max-w-7xl mx-auto h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto h-16 sm:h-20 flex items-center justify-between">
           <motion.div whileHover={{ scale: 1.03 }}>
-            <div className="text-xl font-black tracking-tighter text-[#8B5E34] font-serif italic">Emma-Shop</div>
+            <div className="text-lg sm:text-xl font-black tracking-tighter text-[#8B5E34] font-serif italic">Emma-Shop</div>
             <div className="text-[8px] font-black uppercase tracking-[0.25em] text-[#C9A84C] -mt-0.5">Boutique Exclusive</div>
           </motion.div>
           <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
@@ -541,10 +542,10 @@ export default function Home() {
       </motion.nav>
 
       {/* ── HERO ── */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center pt-24 pb-20 px-6 overflow-hidden">
+      <section ref={heroRef} className="relative min-h-screen flex items-center pt-20 sm:pt-24 pb-16 sm:pb-20 px-4 sm:px-6 overflow-hidden">
         <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #1A0800 0%, #2D1B08 50%, #3D2010 100%)' }} />
         <FloatingParticles />
-        <div className="absolute right-0 top-0 w-[600px] h-[600px] opacity-10">
+        <div className="absolute right-0 top-0 w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] opacity-10">
           {[...Array(4)].map((_, i) => (
             <motion.div key={i} className="absolute inset-0 rounded-full border border-[#C9A84C]"
               style={{ scale: 0.6 + i * 0.15 }}
@@ -553,12 +554,12 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-24 items-center relative z-10">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 xl:gap-24 items-center relative z-10 w-full">
           <motion.div initial={{ opacity: 0, x: -60 }} animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, ease: 'easeOut' }} className="space-y-8 text-center lg:text-left">
+            transition={{ duration: 0.8, ease: 'easeOut' }} className="space-y-6 sm:space-y-8 text-center lg:text-left">
             <div>
               <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#C9A84C]/30 mb-6"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#C9A84C]/30 mb-4 sm:mb-6"
                 style={{ background: 'rgba(201,168,76,0.08)' }}>
                 <Sparkles size={10} className="text-[#C9A84C]" />
                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#C9A84C]">Collection Exclusive</span>
@@ -566,21 +567,21 @@ export default function Home() {
               <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.7 }}
                 className="font-serif font-black tracking-tighter text-[#FFFDFB] leading-none"
-                style={{ fontSize: 'clamp(42px, 7vw, 88px)' }}>
+                style={{ fontSize: 'clamp(36px, 7vw, 88px)' }}>
                 BIEN<span className="text-[#C9A84C] italic">VENUE</span><span className="text-[#C9A84C]">.</span>
               </motion.h1>
             </div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-              className="p-8 rounded-[2rem] border-l-8 border-[#C9A84C]"
+              className="p-5 sm:p-8 rounded-[2rem] border-l-8 border-[#C9A84C]"
               style={{ background: 'rgba(255,253,251,0.06)', backdropFilter: 'blur(10px)' }}>
-              <p className="text-lg font-serif italic text-[#FFFDFB]/85 leading-relaxed">
+              <p className="text-base sm:text-lg font-serif italic text-[#FFFDFB]/85 leading-relaxed">
                 "Je suis <strong className="text-[#C9A84C]">Sonya Carlach Épouse Kané</strong>, votre référence en mode et élégance africaine."
               </p>
             </motion.div>
             <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
               whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
               onClick={() => document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth' })}
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs text-[#1A0800] shadow-2xl"
+              className="inline-flex items-center gap-3 px-7 sm:px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs text-[#1A0800] shadow-2xl"
               style={{ background: 'linear-gradient(135deg, #C9A84C, #E8C56A)' }}>
               Voir la collection <ChevronRight size={16} />
             </motion.button>
@@ -592,11 +593,11 @@ export default function Home() {
             <div className="relative">
               <motion.div animate={{ rotate: [0, 3, -3, 0] }}
                 transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-                className="aspect-[3/4] w-full max-w-sm bg-white p-3 rounded-[3rem] shadow-2xl border-4 border-[#C9A84C]/30">
-                <img src="/tante-avec-fond.jpg" alt="Emma-Shop" className="w-full h-full object-cover rounded-[2.5rem]" />
+                className="aspect-[3/4] w-full max-w-[260px] sm:max-w-sm bg-white p-2 sm:p-3 rounded-[2rem] sm:rounded-[3rem] shadow-2xl border-4 border-[#C9A84C]/30">
+                <img src="/tante-avec-fond.jpg" alt="Emma-Shop" className="w-full h-full object-cover rounded-[1.5rem] sm:rounded-[2.5rem]" />
               </motion.div>
               <motion.div initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 1 }}
-                className="absolute -bottom-4 -left-4 px-4 py-3 rounded-2xl border border-[#C9A84C]/30 shadow-xl"
+                className="absolute -bottom-4 -left-4 px-3 sm:px-4 py-2 sm:py-3 rounded-2xl border border-[#C9A84C]/30 shadow-xl"
                 style={{ background: 'rgba(45,27,8,0.95)', backdropFilter: 'blur(10px)' }}>
                 <p className="text-[9px] font-black uppercase tracking-widest text-[#C9A84C]">Collection</p>
                 <p className="text-white font-black text-sm">{products.length} Pièces</p>
@@ -607,7 +608,7 @@ export default function Home() {
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}
           style={{ opacity: heroOpacity }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+          className="absolute bottom-8 sm:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
           <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[#C9A84C]/60">Défiler</span>
           <motion.div animate={{ y: [0, 8, 0] }} transition={{ repeat: Infinity, duration: 1.4 }}
             className="w-0.5 h-8 rounded-full bg-gradient-to-b from-[#C9A84C] to-transparent" />
@@ -617,37 +618,37 @@ export default function Home() {
       {/* ── RECHERCHE + FILTRES ── */}
       <motion.section id="collection"
         initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-        className="max-w-7xl mx-auto px-6 pt-12 pb-6">
-        <div className="flex items-baseline gap-4 mb-8">
-          <h2 className="text-3xl font-serif font-black italic text-[#2D1B08]">
+        className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-12 pb-4 sm:pb-6">
+        <div className="flex items-baseline gap-4 mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-serif font-black italic text-[#2D1B08]">
             La Collection<span className="text-[#C9A84C]">.</span>
           </h2>
           <span className="text-sm font-bold text-[#8B5E34]/50">{filtered.length} article{filtered.length > 1 ? 's' : ''}</span>
         </div>
 
-        <div className="relative mb-6">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#C9A84C]" size={18} />
+        <div className="relative mb-5 sm:mb-6">
+          <Search className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-[#C9A84C]" size={18} />
           <motion.input whileFocus={{ boxShadow: '0 0 0 3px rgba(201,168,76,0.2)' }}
             type="text" placeholder="Rechercher une pièce, un style..."
-            className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 text-sm font-medium outline-none transition-all"
+            className="w-full pl-12 sm:pl-14 pr-6 py-4 rounded-2xl border-2 text-sm font-medium outline-none transition-all"
             style={{ background: '#FDF8F2', borderColor: '#EAD8C0' }}
             value={search}
             onChange={e => setSearch(e.target.value)} />
           {search && (
             <button onClick={() => setSearch('')}
-              className="absolute right-5 top-1/2 -translate-y-1/2 text-[#8B5E34] hover:text-[#C9A84C] transition-colors">
+              className="absolute right-4 sm:right-5 top-1/2 -translate-y-1/2 text-[#8B5E34] hover:text-[#C9A84C] transition-colors">
               <X size={16} />
             </button>
           )}
         </div>
 
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide flex-nowrap">
           {categories.map((cat, i) => (
             <motion.button key={cat}
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
               whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={() => setActiveCategory(cat)}
-              className={`px-7 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all relative overflow-hidden shrink-0 ${activeCategory === cat ? 'text-white shadow-lg' : 'text-[#8B5E34] border border-[#F5E6D3] bg-white hover:border-[#C9A84C]/40'}`}>
+              className={`px-5 sm:px-7 py-2.5 sm:py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all relative overflow-hidden shrink-0 whitespace-nowrap ${activeCategory === cat ? 'text-white shadow-lg' : 'text-[#8B5E34] border border-[#F5E6D3] bg-white hover:border-[#C9A84C]/40'}`}>
               {activeCategory === cat && (
                 <motion.div layoutId="activePill" className="absolute inset-0 rounded-full"
                   style={{ background: 'linear-gradient(135deg, #C9A84C, #8B5E34)' }} />
@@ -659,7 +660,7 @@ export default function Home() {
       </motion.section>
 
       {/* ── GRILLE PRODUITS ── */}
-      <section className="max-w-7xl mx-auto px-6 pb-20">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-24 sm:pb-20">
         {loading ? (
           <div className="flex justify-center py-32">
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}>
@@ -677,21 +678,21 @@ export default function Home() {
             )}
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8">
             <AnimatePresence>
               {filtered.map((p, i) => (
                 <motion.div layout key={p.id}
                   initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ delay: Math.min(i * 0.06, 0.4), type: 'spring', damping: 20 }}
                   className="group cursor-pointer" onClick={() => setSelectedProduct(p)}>
-                  <div className="relative aspect-[3/4] rounded-[2.5rem] overflow-hidden border-4 border-white shadow-lg group-hover:-translate-y-4 group-hover:shadow-2xl transition-all duration-500"
+                  <div className="relative aspect-[3/4] rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden border-2 sm:border-4 border-white shadow-lg group-hover:-translate-y-2 sm:group-hover:-translate-y-4 group-hover:shadow-2xl transition-all duration-500"
                     style={{ boxShadow: '0 8px 32px rgba(45,27,8,0.08)' }}>
                     <img src={p.image_url} className="w-full h-full object-cover scale-100 group-hover:scale-110 transition-transform duration-700" alt={p.name} />
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                       style={{ background: 'linear-gradient(to top, rgba(45,27,8,0.9) 0%, transparent 60%)' }} />
                     {p.stock <= 3 && p.stock > 0 && (
                       <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-                        className="absolute top-4 left-4 px-3 py-1 rounded-full text-[9px] font-black uppercase text-white"
+                        className="absolute top-2 sm:top-4 left-2 sm:left-4 px-2 sm:px-3 py-1 rounded-full text-[8px] sm:text-[9px] font-black uppercase text-white"
                         style={{ background: '#E07B39' }}>Plus que {p.stock} !</motion.div>
                     )}
                     {p.stock === 0 && (
@@ -699,28 +700,29 @@ export default function Home() {
                         <span className="text-white font-black uppercase tracking-widest text-xs">Épuisé</span>
                       </div>
                     )}
-                    <div className="absolute bottom-4 left-4 right-4 flex gap-2 translate-y-12 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-400">
+                    {/* Actions : toujours visible sur mobile, hover sur desktop */}
+                    <div className="absolute bottom-3 left-3 right-3 flex gap-2 sm:translate-y-12 sm:group-hover:translate-y-0 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-400">
                       <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                         onClick={e => { e.stopPropagation(); if (p.stock > 0) handleAddToCart(p); }}
                         disabled={p.stock === 0}
-                        className="flex-1 py-3 rounded-xl text-white font-black text-[10px] uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="flex-1 py-2.5 sm:py-3 rounded-xl text-white font-black text-[9px] sm:text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50"
                         style={{ background: 'linear-gradient(135deg, #C9A84C, #8B5E34)' }}>
-                        <ShoppingCart size={14} /> Ajouter
+                        <ShoppingCart size={13} /> Ajouter
                       </motion.button>
                       <motion.button whileHover={{ scale: 1.05 }}
                         onClick={e => { e.stopPropagation(); setSelectedProduct(p); }}
-                        className="w-12 h-12 rounded-xl flex items-center justify-center"
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                         style={{ background: 'rgba(255,253,251,0.15)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                        <ChevronRight size={16} className="text-white" />
+                        <ChevronRight size={14} className="text-white" />
                       </motion.button>
                     </div>
                   </div>
-                  <div className="mt-5 px-2">
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#C9A84C]/70 mb-1">{p.category}</p>
-                    <h3 className="font-black text-[#2D1B08] text-sm uppercase tracking-tight truncate group-hover:text-[#8B5E34] transition-colors">{p.name}</h3>
-                    <div className="flex items-center justify-between mt-2">
-                      <p className="text-2xl font-black text-[#C9A84C]">{p.price} €</p>
-                      {p.discount_price && <span className="text-sm text-[#8B5E34]/40 line-through">{p.discount_price} €</span>}
+                  <div className="mt-3 sm:mt-5 px-1 sm:px-2">
+                    <p className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-[#C9A84C]/70 mb-0.5 sm:mb-1">{p.category}</p>
+                    <h3 className="font-black text-[#2D1B08] text-xs sm:text-sm uppercase tracking-tight truncate group-hover:text-[#8B5E34] transition-colors">{p.name}</h3>
+                    <div className="flex items-center justify-between mt-1.5 sm:mt-2">
+                      <p className="text-xl sm:text-2xl font-black text-[#C9A84C]">{p.price} €</p>
+                      {p.discount_price && <span className="text-xs sm:text-sm text-[#8B5E34]/40 line-through">{p.discount_price} €</span>}
                     </div>
                   </div>
                 </motion.div>
@@ -732,14 +734,13 @@ export default function Home() {
 
       {/* ── FOOTER ── */}
       <motion.footer initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
-        className="rounded-t-[4rem] mt-12 px-6 py-20 relative overflow-hidden"
+        className="rounded-t-[3rem] sm:rounded-t-[4rem] mt-8 sm:mt-12 px-4 sm:px-6 py-14 sm:py-20 relative overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #1A0800, #2D1B08)' }}>
         <FloatingParticles />
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10 relative z-10">
-          <div>
-            <div className="text-3xl font-serif font-black italic text-[#FFFDFB]">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-8 sm:gap-10 relative z-10">
+          <div className="text-center sm:text-left">
+            <div className="text-2xl sm:text-3xl font-serif font-black italic text-[#FFFDFB]">
               Emma-Shop
-              {/* Point secret — accès login admin */}
               <Link href="/login">
                 <span className="text-[#C9A84C] cursor-default hover:opacity-80 transition-opacity" title="">.</span>
               </Link>

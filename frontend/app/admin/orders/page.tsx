@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import {
   ShoppingCart, User, MapPin, Phone, CheckCircle,
   XCircle, Clock, ExternalLink, ChevronRight, Loader2,
-  TrendingUp, Package, Sparkles
+  TrendingUp, Package, Sparkles, ArrowLeft
 } from 'lucide-react';
 
 type Order = {
@@ -35,6 +35,8 @@ export default function AdminOrders() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'en_attente' | 'livré' | 'annulé'>('all');
+  // Sur mobile, on affiche soit la liste, soit le détail
+  const [showDetail, setShowDetail] = useState(false);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -49,6 +51,15 @@ export default function AdminOrders() {
 
   useEffect(() => { fetchOrders(); }, []);
 
+  const selectOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setShowDetail(true);
+  };
+
+  const backToList = () => {
+    setShowDetail(false);
+  };
+
   const updateStatus = async (orderId: string, status: string) => {
     setUpdatingId(orderId);
     await supabase.from('orders').update({ status }).eq('id', orderId);
@@ -59,17 +70,11 @@ export default function AdminOrders() {
   };
 
   const contactWhatsApp = (phone: string, name: string) => {
-    // 1. On ne garde que les chiffres (supprime +, espaces, points, etc.)
     const cleanPhone = phone.replace(/\D/g, '');
-
-    // 2. On s'assure que le message est bien encodé
     const msg = encodeURIComponent(`Bonjour ${name} 👋, c'est Emma-Shop. Je vous contacte concernant votre commande. Merci de votre confiance ! 🌟`);
-
-    // 3. On utilise wa.me avec le numéro propre
     window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
   };
 
-  // ✅ Prix en euros
   const fmt = (n: number) =>
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(n);
 
@@ -93,7 +98,7 @@ export default function AdminOrders() {
 
       {/* Decorative bg */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] opacity-[0.03] rounded-full"
+        <div className="absolute top-0 right-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] opacity-[0.03] rounded-full"
           style={{ background: 'radial-gradient(circle, #C9A84C, transparent)', transform: 'translate(20%, -20%)' }} />
       </div>
 
@@ -104,26 +109,40 @@ export default function AdminOrders() {
         className="border-b sticky top-0 z-50"
         style={{ background: 'rgba(255,253,251,0.95)', backdropFilter: 'blur(20px)', borderColor: '#F5E6D3' }}
       >
-        <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-serif font-black italic text-[#2D1B08]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-5 flex justify-between items-center gap-3">
+          {/* Bouton retour sur mobile quand détail ouvert */}
+          {showDetail && (
+            <button
+              onClick={backToList}
+              className="lg:hidden flex items-center gap-2 text-[#8B5E34] font-black text-sm shrink-0"
+            >
+              <ArrowLeft size={18} /> Liste
+            </button>
+          )}
+          <div className={showDetail ? 'hidden lg:block' : ''}>
+            <h1 className="text-2xl sm:text-3xl font-serif font-black italic text-[#2D1B08]">
               Commandes<span className="text-[#C9A84C]">.</span>
             </h1>
             <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#8B5E34]/60 mt-0.5">Suivi en temps réel</p>
           </div>
+          {showDetail && (
+            <h2 className="lg:hidden text-lg font-serif font-black italic text-[#2D1B08] truncate flex-1">
+              {selectedOrder?.customer_name}
+            </h2>
+          )}
           <motion.button
             whileHover={{ scale: 1.05 }} onClick={fetchOrders}
-            className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-[#EAD8C0] text-[#8B5E34] hover:border-[#C9A84C]/40 transition-all"
+            className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-[#EAD8C0] text-[#8B5E34] hover:border-[#C9A84C]/40 transition-all shrink-0"
           >
-            ↻ Actualiser
+            ↻ <span className="hidden sm:inline">Actualiser</span>
           </motion.button>
         </div>
       </motion.div>
 
-      <div className="max-w-7xl mx-auto px-6 py-10 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative z-10">
 
-        {/* ── STATS ── */}
-        <div className="grid grid-cols-3 gap-4 mb-10">
+        {/* ── STATS ── (cachées sur mobile quand détail visible) */}
+        <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-10 ${showDetail ? 'hidden lg:grid' : 'grid'}`}>
           {[
             { icon: Package, label: 'Total commandes', value: stats.total, color: '#2D1B08' },
             { icon: Clock, label: 'En attente', value: stats.en_attente, color: '#C9A84C', highlight: stats.en_attente > 0 },
@@ -132,7 +151,7 @@ export default function AdminOrders() {
             <motion.div
               key={label}
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
-              className="p-6 rounded-3xl border bg-white relative overflow-hidden"
+              className="p-5 sm:p-6 rounded-3xl border bg-white relative overflow-hidden"
               style={{ borderColor: highlight ? '#C9A84C40' : '#F5E6D3', boxShadow: highlight ? '0 0 0 2px #C9A84C20' : 'none' }}
             >
               {highlight && (
@@ -146,18 +165,18 @@ export default function AdminOrders() {
                 <Icon size={16} style={{ color }} />
                 <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8B5E34]/60">{label}</span>
               </div>
-              <p className="text-3xl font-black" style={{ color }}>{value}</p>
+              <p className="text-2xl sm:text-3xl font-black" style={{ color }}>{value}</p>
             </motion.div>
           ))}
         </div>
 
-        {/* ── FILTER TABS ── */}
-        <div className="flex gap-2 mb-8 overflow-x-auto pb-1 scrollbar-hide">
+        {/* ── FILTER TABS ── (cachés sur mobile quand détail visible) */}
+        <div className={`gap-2 mb-6 sm:mb-8 overflow-x-auto pb-1 scrollbar-hide flex-nowrap ${showDetail ? 'hidden lg:flex' : 'flex'}`}>
           {(['all', 'en_attente', 'livré', 'annulé'] as const).map(f => (
             <motion.button
               key={f} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.95 }}
               onClick={() => setFilter(f)}
-              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 transition-all ${filter === f ? 'text-white shadow-lg' : 'border border-[#EAD8C0] text-[#8B5E34] bg-white'}`}
+              className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 whitespace-nowrap transition-all ${filter === f ? 'text-white shadow-lg' : 'border border-[#EAD8C0] text-[#8B5E34] bg-white'}`}
               style={filter === f ? { background: f === 'all' ? 'linear-gradient(135deg, #2D1B08, #4A2810)' : f === 'en_attente' ? '#C9A84C' : f === 'livré' ? '#065F46' : '#991B1B' } : {}}
             >
               {f === 'all' ? 'Toutes' : STATUS_CONFIG[f]?.label} {f !== 'all' && `(${orders.filter(o => o.status === f).length})`}
@@ -166,10 +185,10 @@ export default function AdminOrders() {
         </div>
 
         {/* ── MAIN GRID ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 sm:gap-8">
 
-          {/* Liste commandes */}
-          <div className="space-y-3">
+          {/* Liste commandes — cachée sur mobile quand détail ouvert */}
+          <div className={`space-y-3 ${showDetail ? 'hidden lg:block' : 'block'}`}>
             {loading ? (
               <div className="flex justify-center py-24">
                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}>
@@ -192,8 +211,8 @@ export default function AdminOrders() {
                       key={order.id} layout
                       initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }}
                       transition={{ delay: i * 0.04 }}
-                      onClick={() => setSelectedOrder(isSelected ? null : order)}
-                      className="relative rounded-3xl border p-5 cursor-pointer transition-all duration-300 group overflow-hidden"
+                      onClick={() => selectOrder(order)}
+                      className="relative rounded-2xl sm:rounded-3xl border p-4 sm:p-5 cursor-pointer transition-all duration-300 group overflow-hidden"
                       style={{
                         background: isSelected ? 'linear-gradient(135deg, #2D1B08, #3D2010)' : 'white',
                         borderColor: isSelected ? 'transparent' : '#F5E6D3',
@@ -201,12 +220,12 @@ export default function AdminOrders() {
                       }}
                     >
                       {!isSelected && (
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-3xl"
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl sm:rounded-3xl"
                           style={{ background: 'linear-gradient(135deg, #FDF8F2, transparent)' }} />
                       )}
-                      <div className="relative flex items-center gap-5">
+                      <div className="relative flex items-center gap-3 sm:gap-5">
                         <div
-                          className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 font-black text-lg"
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 font-black text-base sm:text-lg"
                           style={{ background: isSelected ? 'rgba(201,168,76,0.2)' : '#FDF8F2', color: isSelected ? '#C9A84C' : '#8B5E34' }}
                         >
                           {order.customer_name.charAt(0).toUpperCase()}
@@ -216,14 +235,13 @@ export default function AdminOrders() {
                             <h3 className={`font-black text-sm uppercase tracking-tight truncate ${isSelected ? 'text-[#FFFDFB]' : 'text-[#2D1B08]'}`}>
                               {order.customer_name}
                             </h3>
-                            {/* ✅ Prix en euros */}
-                            <span className="text-xl font-black shrink-0 text-[#C9A84C]">
+                            <span className="text-lg sm:text-xl font-black shrink-0 text-[#C9A84C]">
                               {fmt(order.total_price)}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                             <span
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase"
+                              className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-[9px] font-black uppercase"
                               style={{ background: isSelected ? 'rgba(255,255,255,0.1)' : bg, color: isSelected ? '#C9A84C' : color }}
                             >
                               <StatusIcon size={9} /> {label}
@@ -233,23 +251,23 @@ export default function AdminOrders() {
                             </span>
                           </div>
                         </div>
-                        <motion.div animate={{ rotate: isSelected ? 90 : 0 }} className={isSelected ? 'text-[#C9A84C]' : 'text-[#C9A84C]/30'}>
+                        <motion.div animate={{ rotate: isSelected ? 90 : 0 }} className={`shrink-0 ${isSelected ? 'text-[#C9A84C]' : 'text-[#C9A84C]/30'}`}>
                           <ChevronRight size={20} />
                         </motion.div>
                       </div>
 
-                      {/* Actions inline */}
+                      {/* Actions inline (desktop) */}
                       {isSelected && (
                         <motion.div
                           initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-                          className="mt-5 pt-5 border-t border-white/10 flex gap-2 flex-wrap"
+                          className="mt-4 sm:mt-5 pt-4 sm:pt-5 border-t border-white/10 flex gap-2 flex-wrap"
                         >
                           {order.status !== 'livré' && (
                             <motion.button
                               whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                               onClick={e => { e.stopPropagation(); updateStatus(order.id, 'livré'); }}
                               disabled={updatingId === order.id}
-                              className="px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5"
+                              className="px-3 sm:px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap"
                               style={{ background: '#D1FAE5', color: '#065F46' }}
                             >
                               {updatingId === order.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
@@ -261,7 +279,7 @@ export default function AdminOrders() {
                               whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                               onClick={e => { e.stopPropagation(); updateStatus(order.id, 'annulé'); }}
                               disabled={updatingId === order.id}
-                              className="px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5"
+                              className="px-3 sm:px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap"
                               style={{ background: '#FEE2E2', color: '#991B1B' }}
                             >
                               <XCircle size={12} /> Annuler
@@ -270,7 +288,7 @@ export default function AdminOrders() {
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             onClick={e => { e.stopPropagation(); contactWhatsApp(order.customer_phone, order.customer_name); }}
-                            className="px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 text-white"
+                            className="px-3 sm:px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 text-white whitespace-nowrap"
                             style={{ background: '#25D366' }}
                           >
                             <ExternalLink size={12} /> WhatsApp
@@ -285,28 +303,28 @@ export default function AdminOrders() {
           </div>
 
           {/* ── DETAIL PANEL ── */}
-          <div className="lg:sticky lg:top-28 h-fit">
+          {/* Sur mobile : pleine page. Sur desktop : panneau latéral sticky */}
+          <div className={`lg:sticky lg:top-28 h-fit ${showDetail ? 'block' : 'hidden lg:block'}`}>
             <AnimatePresence mode="wait">
               {selectedOrder ? (
                 <motion.div
                   key={selectedOrder.id}
-                  initial={{ opacity: 0, x: 30, scale: 0.97 }} animate={{ opacity: 1, x: 0, scale: 1 }}
-                  exit={{ opacity: 0, x: 30, scale: 0.97 }}
+                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
                   transition={{ type: 'spring', damping: 25 }}
-                  className="rounded-[3rem] overflow-hidden border"
+                  className="rounded-[2rem] sm:rounded-[3rem] overflow-hidden border"
                   style={{ borderColor: '#F5E6D3', background: '#FFFDFB', boxShadow: '0 20px 60px rgba(45,27,8,0.08)' }}
                 >
-                  <div className="p-8 border-b border-[#EAD8C0]" style={{ background: 'linear-gradient(135deg, #FDF8F2, #FAF0E8)' }}>
+                  <div className="p-6 sm:p-8 border-b border-[#EAD8C0]" style={{ background: 'linear-gradient(135deg, #FDF8F2, #FAF0E8)' }}>
                     <div className="flex items-center gap-2 mb-2">
                       <Sparkles size={12} className="text-[#C9A84C]" />
                       <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[#C9A84C]">Détails commande</span>
                     </div>
-                    <h2 className="text-2xl font-serif font-black italic text-[#2D1B08]">{selectedOrder.customer_name}</h2>
-                    {/* ✅ Prix en euros */}
-                    <span className="text-3xl font-black text-[#C9A84C] mt-2 block">{fmt(selectedOrder.total_price)}</span>
+                    <h2 className="text-xl sm:text-2xl font-serif font-black italic text-[#2D1B08]">{selectedOrder.customer_name}</h2>
+                    <span className="text-2xl sm:text-3xl font-black text-[#C9A84C] mt-2 block">{fmt(selectedOrder.total_price)}</span>
                   </div>
 
-                  <div className="p-8 space-y-6">
+                  <div className="p-5 sm:p-8 space-y-5 sm:space-y-6">
                     <div className="space-y-3">
                       {[
                         { icon: Phone, label: selectedOrder.customer_phone },
@@ -317,7 +335,7 @@ export default function AdminOrders() {
                           className="flex items-start gap-3 p-3 rounded-2xl" style={{ background: '#FDF8F2' }}
                         >
                           <Icon size={16} className="text-[#C9A84C] mt-0.5 shrink-0" />
-                          <span className="text-sm font-bold text-[#2D1B08]">{label}</span>
+                          <span className="text-sm font-bold text-[#2D1B08] break-all">{label}</span>
                         </motion.div>
                       ))}
                     </div>
@@ -328,19 +346,19 @@ export default function AdminOrders() {
                         {selectedOrder.items?.map((item, i) => (
                           <motion.div
                             key={i} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                            className="flex justify-between items-center py-3 border-b border-[#F5E6D3] last:border-0"
+                            className="flex justify-between items-center py-2.5 sm:py-3 border-b border-[#F5E6D3] last:border-0"
                           >
                             <div>
                               <p className="font-black text-sm text-[#2D1B08]">{item.product?.name || 'Article'}</p>
                               <p className="text-[10px] text-[#8B5E34]/60 font-bold mt-0.5">Qté : {item.quantity}</p>
                             </div>
-                            {/* ✅ Prix en euros */}
                             <span className="font-black text-[#C9A84C]">{fmt(item.unit_price * item.quantity)}</span>
                           </motion.div>
                         ))}
                       </div>
                     </div>
 
+                    {/* Boutons d'action — bien espacés sur mobile */}
                     <div className="pt-2 flex flex-col gap-2">
                       {selectedOrder.status !== 'livré' && (
                         <motion.button
@@ -372,7 +390,18 @@ export default function AdminOrders() {
                           <XCircle size={12} /> Annuler la commande
                         </motion.button>
                       )}
+
+                      {/* Bouton retour — mobile uniquement */}
+                      <button
+                        onClick={backToList}
+                        className="lg:hidden w-full py-3 mt-1 rounded-2xl text-[10px] font-black uppercase tracking-widest text-[#8B5E34] border border-[#EAD8C0]"
+                      >
+                        ← Retour à la liste
+                      </button>
                     </div>
+
+                    {/* Safe area bottom sur mobile */}
+                    <div className="h-4 lg:h-0" />
                   </div>
                 </motion.div>
               ) : (
