@@ -791,7 +791,7 @@ export default function Home() {
             <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(201,168,76,0.15)' }}>
               <Phone size={20} className="text-[#C9A84C]" />
             </div>
-            +33 6 52 85 16 46
+
           </motion.div>
         </div>
       </motion.footer>
