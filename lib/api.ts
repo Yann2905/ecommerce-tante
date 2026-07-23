@@ -2,14 +2,16 @@ import { supabase } from './supabase';
 
 /**
  * ✅ RÉCUPÉRATION DE L'URL DE BASE
- * On nettoie les slashes superflus pour éviter les erreurs d'URL.
+ * L'API vit désormais dans la même app Next.js (app/api/**), donc same-origin :
+ * on utilise des URLs relatives ("" => "/api/...").
+ * NEXT_PUBLIC_API_URL reste utilisable si un jour l'API est hébergée ailleurs.
  */
 const getBaseUrl = () => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
   if (envUrl) {
     return envUrl.replace(/\/+$/, ""); // Enlève le(s) slash(es) à la fin
   }
-  return "http://localhost:5000";
+  return ""; // same-origin
 };
 
 const API_URL = getBaseUrl();
@@ -72,7 +74,7 @@ export async function apiCall(endpoint: string, options: any = {}) {
     console.error("❌ Erreur API:", error);
 
     if (error.message === 'Failed to fetch') {
-      throw new Error("Impossible de contacter le serveur. Vérifiez votre connexion ou le réveil du backend Render.");
+      throw new Error("Impossible de contacter le serveur. Vérifiez votre connexion internet.");
     }
     throw error;
   }

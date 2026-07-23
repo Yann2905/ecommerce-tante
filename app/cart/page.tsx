@@ -59,8 +59,8 @@ export default function CartPage() {
     setLoading(true);
 
     try {
-      // ✅ NETTOYAGE DE L'URL : On enlève un éventuel "/api" à la fin de la variable d'env
-      const BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/api$/, '');
+      // ✅ API same-origin (app/api/orders). URL relative : plus de CORS, plus de backend distant.
+      const BASE_URL = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api$/, '');
       const finalUrl = `${BASE_URL}/api/orders`;
 
       console.log("🚀 Tentative de commande vers :", finalUrl);
