@@ -59,6 +59,10 @@ Copie `.env.local` en local, et reproduis ces variables sur **Vercel → Setting
 | `SUPABASE_URL` | serveur | URL du projet Supabase |
 | `SUPABASE_SERVICE_ROLE_KEY` | serveur | Clé **service_role** (secret — Supabase → Settings → API) |
 | `CRON_SECRET` | serveur | *(optionnel)* protège `/api/ping` |
+| `NEXT_PUBLIC_SHOP_WHATSAPP` | client | *(optionnel)* n° WhatsApp boutique (format `225XXXXXXXXXX`) → bouton « Confirmer sur WhatsApp » |
+| `RESEND_API_KEY` | serveur | *(optionnel)* e-mail de commande à la boutique via [Resend](https://resend.com) |
+| `RESEND_FROM` | serveur | *(optionnel)* expéditeur vérifié Resend |
+| `SHOP_EMAIL` | serveur | *(optionnel)* e-mail destinataire (la boutique) |
 
 > ⚠️ `SUPABASE_SERVICE_ROLE_KEY` est **secret** : jamais de préfixe `NEXT_PUBLIC`, jamais exposée au navigateur.
 
@@ -77,6 +81,12 @@ Le plan gratuit Supabase met le projet **en pause après ~7 jours d'inactivité*
 Un **Vercel Cron** (`vercel.json`) appelle `/api/ping` **chaque jour à 6h UTC**, ce qui
 effectue une requête légère et garde la base active. Aucune action manuelle nécessaire une
 fois déployé.
+
+## Base de données (migrations)
+
+Les fonctions SQL vivent dans `supabase/migrations/`. À appliquer dans **Supabase → SQL Editor** (copier-coller le contenu du fichier) ou via la CLI `supabase db push` :
+
+- `0001_create_order_atomic.sql` — fonction `create_order` : création de commande **atomique** (vérif stock + verrou de ligne + décrément + prix recalculés serveur). **Requise** : `/api/orders` l'appelle. À exécuter avant tout déploiement qui utilise le nouveau flux de commande.
 
 ## Déploiement (Vercel)
 

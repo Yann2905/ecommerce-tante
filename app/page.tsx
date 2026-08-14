@@ -194,6 +194,7 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
   const [loading, setLoading] = useState(false);
   const [dialCode, setDialCode] = useState('225');
   const [customer, setCustomer] = useState({ name: '', localPhone: '', address: '' });
+  const [waLink, setWaLink] = useState<string | null>(null);
 
   const handleOrder = async () => {
     if (!customer.name.trim() || !customer.localPhone.trim()) {
@@ -203,35 +204,36 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
     try {
       const e164Phone = formatToE164(dialCode, customer.localPhone);
 
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert([{
+      // ✅ Commande via l'API serveur (création atomique : stock vérifié +
+      // verrouillé + décrémenté, prix recalculés en base). Un seul point d'entrée.
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           customer_name: customer.name.trim(),
           customer_phone: e164Phone,
           delivery_address: customer.address.trim(),
-          total_price: totalPrice(),
-        }])
-        .select()
-        .single();
+          items: items.map(i => ({ product_id: i.id, quantity: i.quantity })),
+        }),
+      });
 
-      if (orderError) throw orderError;
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || result.message || 'Erreur lors de la commande');
+      }
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(items.map(i => ({
-          order_id: order.id,
-          product_id: i.id,
-          quantity: i.quantity,
-          unit_price: i.price,
-        })));
-
-      if (itemsError) throw itemsError;
-
-      for (const item of items) {
-        await supabase.rpc('decrement_stock', {
-          product_id: item.id,
-          qty: item.quantity,
-        });
+      // 📱 Lien WhatsApp pré-rempli vers la boutique (si un numéro est configuré).
+      // Construit AVANT le clearCart pour capturer le récap du panier.
+      const shopNumber = process.env.NEXT_PUBLIC_SHOP_WHATSAPP?.replace(/\D/g, '');
+      if (shopNumber) {
+        const summary = items.map(i => `• ${i.name} × ${i.quantity}`).join('\n');
+        const text =
+          `Bonjour Emma-Shop ! Je confirme ma commande :\n${summary}\n` +
+          `Total : ${totalPrice()} €\n` +
+          `Nom : ${customer.name.trim()}\n` +
+          `Tél : +${e164Phone}\n` +
+          `Adresse : ${customer.address.trim() || 'Non précisée'}`;
+        setWaLink(`https://wa.me/${shopNumber}?text=${encodeURIComponent(text)}`);
       }
 
       setStep(3);
@@ -412,6 +414,17 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
                       <p className="text-[10px] font-black uppercase tracking-widest text-[#C9A84C] mb-1">Prochaine étape</p>
                       <p className="text-sm font-bold text-[#2D1B08]">📱 Emma-Shop vous contacte sur WhatsApp</p>
                     </motion.div>
+
+                    {waLink && (
+                      <motion.a
+                        href={waLink} target="_blank" rel="noopener noreferrer"
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}
+                        whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                        className="w-full py-4 rounded-2xl font-black uppercase text-xs tracking-[0.2em] text-white flex items-center justify-center gap-2 shadow-xl"
+                        style={{ background: '#25D366' }}>
+                        <Phone size={16} /> Confirmer sur WhatsApp
+                      </motion.a>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

@@ -2,24 +2,24 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAuthUser } from '@/lib/auth';
+import { notifyNewOrder } from '@/lib/notifications';
 
 export const dynamic = 'force-dynamic';
 
+// Le prix (unit_price / total_price) envoyé par le client est IGNORÉ :
+// la fonction SQL create_order relit les vrais prix en base. On l'accepte
+// en optionnel pour rester compatible avec les deux formulaires existants.
 const OrderItemSchema = z.object({
   product_id: z.string().uuid('ID produit invalide'),
   quantity: z.number().int().positive('Quantité invalide'),
-  unit_price: z.number().positive('Prix invalide'),
+  unit_price: z.number().positive().optional(),
 });
 
 const CreateOrderSchema = z.object({
   customer_name: z.string().min(2, 'Nom trop court').max(100),
   customer_phone: z.string().min(8, 'Numéro invalide').max(20),
-  delivery_address: z
-    .string()
-    .max(300)
-    .optional()
-    .transform((val) => (val && val.trim().length > 0 ? val : 'Non précisée')),
-  total_price: z.number().positive('Total invalide'),
+  delivery_address: z.string().max(300).optional().nullable(),
+  total_price: z.number().positive().optional(),
   items: z.array(OrderItemSchema).min(1, 'Panier vide'),
 });
 
@@ -39,60 +39,28 @@ export async function POST(request: Request) {
       );
     }
 
-    const { customer_name, customer_phone, delivery_address, total_price, items } =
-      parsed.data;
+    const { customer_name, customer_phone, delivery_address, items } = parsed.data;
 
-    // 1. Récupérer les vrais prix / stocks depuis la BDD
-    const productIds = items.map((i) => i.product_id);
-    const { data: products, error: prodError } = await supabaseAdmin
-      .from('products')
-      .select('id, price, discount_price, stock, is_active, name')
-      .in('id', productIds);
-
-    if (prodError) throw prodError;
-
-    // 2. Vérifier stock et disponibilité
-    for (const item of items) {
-      const product = products?.find((p) => p.id === item.product_id);
-      if (!product) throw new Error(`Produit introuvable : ${item.product_id}`);
-      if (!product.is_active)
-        throw new Error(`Produit non disponible : ${product.name}`);
-      if (product.stock < item.quantity)
-        throw new Error(`Stock insuffisant pour : ${product.name}`);
-    }
-
-    // 3. Recalculer le total côté serveur (jamais faire confiance au client)
-    const serverTotal = items.reduce((sum, item) => {
-      const product = products!.find((p) => p.id === item.product_id)!;
-      const realPrice = product.discount_price ?? product.price;
-      return sum + realPrice * item.quantity;
-    }, 0);
-
-    // 4. Créer la commande avec le vrai total
-    const { data: order, error: orderError } = await supabaseAdmin
-      .from('orders')
-      .insert([{ customer_name, customer_phone, delivery_address, total_price: serverTotal }])
-      .select()
-      .single();
-
-    if (orderError) throw orderError;
-
-    // 5. Insérer les articles avec les vrais prix
-    const orderItems = items.map((item) => {
-      const product = products!.find((p) => p.id === item.product_id)!;
-      return {
-        order_id: order.id,
-        product_id: item.product_id,
-        quantity: item.quantity,
-        unit_price: product.discount_price ?? product.price,
-      };
+    // ✅ Création ATOMIQUE en base (vérif stock + verrou + décrément + prix
+    // serveur) via la fonction SQL create_order (voir supabase/migrations).
+    const { data: order, error } = await supabaseAdmin.rpc('create_order', {
+      p_customer_name: customer_name,
+      p_customer_phone: customer_phone,
+      p_delivery_address: delivery_address ?? null,
+      p_items: items.map((i) => ({
+        product_id: i.product_id,
+        quantity: i.quantity,
+      })),
     });
 
-    const { error: itemsError } = await supabaseAdmin
-      .from('order_items')
-      .insert(orderItems);
+    if (error) {
+      // Les erreurs métier (stock insuffisant, produit indisponible…) remontent
+      // comme exceptions Postgres → message clair, statut 400.
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
 
-    if (itemsError) throw itemsError;
+    // 🔔 Notification e-mail à la boutique (best-effort, ne bloque pas la commande).
+    await notifyNewOrder(order, items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })));
 
     return NextResponse.json(
       { message: 'Commande réussie ! Le stock a été mis à jour.', order },
