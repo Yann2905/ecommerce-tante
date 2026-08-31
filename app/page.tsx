@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { useCart } from '@/lib/store';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Logo } from '@/components/Logo';
 
 const COUNTRY_CODES = [
   { code: '225', flag: '🇨🇮', label: "Côte d'Ivoire" },
@@ -123,7 +124,7 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
       if (shopNumber) {
         const summary = items.map(i => `• ${i.name} × ${i.quantity}`).join('\n');
         const text =
-          `Bonjour Emma-Shop ! Je confirme ma commande :\n${summary}\n` +
+          `Bonjour Emmaashop ! Je confirme ma commande :\n${summary}\n` +
           `Total : ${totalPrice()} €\n` +
           `Nom : ${customer.name.trim()}\n` +
           `Tél : +${e164Phone}\n` +
@@ -281,7 +282,7 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
                     <div className="flex items-start gap-2 p-3 rounded-xl" style={{ background: '#FDF8F2' }}>
                       <Phone size={14} className="text-[#C9A84C] mt-0.5 shrink-0" />
                       <p className="text-[11px] text-[#8B5E34] font-medium">
-                        Emma-Shop vous contactera sur WhatsApp pour confirmer votre commande.
+                        Emmaashop vous contactera sur WhatsApp pour confirmer votre commande.
                       </p>
                     </div>
                   </motion.div>
@@ -307,7 +308,7 @@ const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
                       className="p-4 rounded-2xl border border-[#EAD8C0] w-full" style={{ background: '#FDF8F2' }}>
                       <p className="text-[10px] font-black uppercase tracking-widest text-[#C9A84C] mb-1">Prochaine étape</p>
-                      <p className="text-sm font-bold text-[#2D1B08]">📱 Emma-Shop vous contacte sur WhatsApp</p>
+                      <p className="text-sm font-bold text-[#2D1B08]">📱 Emmaashop vous contacte sur WhatsApp</p>
                     </motion.div>
 
                     {waLink && (
@@ -428,8 +429,9 @@ export default function Home() {
         style={{ background: 'rgba(255,253,251,0.92)', backdropFilter: 'blur(20px)', borderColor: '#F5E6D3', boxShadow: '0 4px 30px rgba(45,27,8,0.06)' }}>
         <div className="max-w-7xl mx-auto h-16 sm:h-20 flex items-center justify-between">
           <motion.div whileHover={{ scale: 1.03 }}>
-            <div className="text-lg sm:text-xl font-black tracking-tighter text-[#8B5E34] font-serif italic">Emma-Shop</div>
-            <div className="text-[8px] font-black uppercase tracking-[0.25em] text-[#C9A84C] -mt-0.5">Boutique Exclusive</div>
+            <Link href="/" aria-label="Emmaashop — accueil">
+              <Logo size={40} />
+            </Link>
           </motion.div>
           <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
             onClick={() => setIsCartOpen(true)}
@@ -500,7 +502,7 @@ export default function Home() {
               <motion.div animate={{ rotate: [0, 3, -3, 0] }}
                 transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
                 className="aspect-[3/4] w-full max-w-[260px] sm:max-w-sm bg-white p-2 sm:p-3 rounded-[2rem] sm:rounded-[3rem] shadow-2xl border-4 border-[#C9A84C]/30">
-                <img src="/tante-avec-fond.jpg" alt="Emma-Shop" className="w-full h-full object-cover rounded-[1.5rem] sm:rounded-[2.5rem]" />
+                <img src="/tante-avec-fond.jpg" alt="Emmaashop" className="w-full h-full object-cover rounded-[1.5rem] sm:rounded-[2.5rem]" />
               </motion.div>
               <motion.div initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 1 }}
                 className="absolute -bottom-4 -left-4 px-3 sm:px-4 py-2 sm:py-3 rounded-2xl border border-[#C9A84C]/30 shadow-xl"
@@ -646,7 +648,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-8 sm:gap-10 relative z-10">
           <div className="text-center sm:text-left">
             <div className="text-2xl sm:text-3xl font-serif font-black italic text-[#FFFDFB]">
-              Emma-Shop
+              Emmaashop
               <Link href="/login">
                 <span className="text-[#C9A84C] cursor-default hover:opacity-80 transition-opacity" title="">.</span>
               </Link>

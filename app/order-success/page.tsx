@@ -43,7 +43,7 @@ export default function SuccessPage() {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
             className="text-[#5C3D2E] font-medium leading-relaxed italic opacity-70"
           >
-            Votre commande a bien été transmise à Emma-Shop.<br />
+            Votre commande a bien été transmise à Emmaashop.<br />
             Préparez-vous à briller avec élégance !
           </motion.p>
         </div>
@@ -57,7 +57,7 @@ export default function SuccessPage() {
           <p className="text-[10px] font-black uppercase tracking-widest text-[#B48446]">Prochaine étape</p>
           <p className="text-sm font-bold flex items-center justify-center gap-2 text-[#2D1B08]">
             <Smartphone size={16} className="text-[#C9A84C]" />
-            Emma-Shop vous contactera sur WhatsApp
+            Emmaashop vous contactera sur WhatsApp
           </p>
         </motion.div>
 

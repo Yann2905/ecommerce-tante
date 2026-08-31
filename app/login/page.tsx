@@ -46,7 +46,7 @@ export default function LoginPage() {
       <div className="absolute inset-0">
         <img
           src="/matante.jpg"
-          alt="Emma-Shop"
+          alt="Emmaashop"
           className="w-full h-full object-cover object-top"
           style={{ filter: 'brightness(0.4) saturate(1.2)' }}
         />
@@ -182,7 +182,7 @@ export default function LoginPage() {
             </form>
 
             <p className="mt-10 text-center text-[10px] font-bold text-white/10 uppercase tracking-[0.3em]">
-              Accès Privé Emma-Shop Boutique
+              Accès Privé Emmaashop Boutique
             </p>
           </div>
         </div>

@@ -9,7 +9,7 @@ import { supabaseAdmin } from './supabase-admin';
  *
  * Variables requises (serveur) :
  *   - RESEND_API_KEY   : clé API Resend (https://resend.com)
- *   - RESEND_FROM      : expéditeur vérifié, ex "Emma-Shop <commandes@ton-domaine.com>"
+ *   - RESEND_FROM      : expéditeur vérifié, ex "Emmaashop <commandes@ton-domaine.com>"
  *   - SHOP_EMAIL       : destinataire (l'e-mail de ta tante)
  */
 type OrderRow = {
@@ -46,7 +46,7 @@ export async function notifyNewOrder(order: OrderRow, items: OrderItemInput[]) {
       .join('<br>');
 
     const html = `
-      <h2>🛍️ Nouvelle commande Emma-Shop</h2>
+      <h2>🛍️ Nouvelle commande Emmaashop</h2>
       <p><strong>Client :</strong> ${escapeHtml(order.customer_name)}</p>
       <p><strong>Téléphone :</strong> ${escapeHtml(order.customer_phone)}</p>
       <p><strong>Adresse :</strong> ${escapeHtml(order.delivery_address)}</p>

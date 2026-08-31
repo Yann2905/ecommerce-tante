@@ -71,7 +71,7 @@ export default function AdminOrders() {
 
   const contactWhatsApp = (phone: string, name: string) => {
     const cleanPhone = phone.replace(/\D/g, '');
-    const msg = encodeURIComponent(`Bonjour ${name} 👋, c'est Emma-Shop. Je vous contacte concernant votre commande. Merci de votre confiance ! 🌟`);
+    const msg = encodeURIComponent(`Bonjour ${name} 👋, c'est Emmaashop. Je vous contacte concernant votre commande. Merci de votre confiance ! 🌟`);
     window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
   };
 

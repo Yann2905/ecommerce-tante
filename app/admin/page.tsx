@@ -104,7 +104,7 @@ export default function AdminDashboard() {
               </div>
               <h3 className="text-xl sm:text-2xl font-serif font-black text-[#2D1B08] mb-3 sm:mb-4 italic">Quitter ?</h3>
               <p className="text-gray-400 text-sm mb-7 sm:mb-8 font-medium italic">
-                Voulez-vous vraiment fermer la session de Emma-Shop ?
+                Voulez-vous vraiment fermer la session de Emmaashop ?
               </p>
 
               <div className="flex gap-3 sm:gap-4">
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
             Console Boutique<span className="text-[#B48446]">.</span>
           </h1>
           <p className="text-[#8B5E34] font-bold text-[10px] uppercase tracking-[0.3em] mt-1.5 italic opacity-60">
-            Gestion Emma-Shop
+            Gestion Emmaashop
           </p>
         </div>
 
