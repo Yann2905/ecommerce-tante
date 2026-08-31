@@ -8,6 +8,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/lib/store';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const COUNTRY_CODES = [
   { code: '225', flag: '🇨🇮', label: "Côte d'Ivoire" },
@@ -80,112 +81,6 @@ const Toast = ({ message, onClose }: { message: string; onClose: () => void }) =
   </motion.div>
 );
 
-// ─── PRODUCT DETAILS MODAL ────────────────────────────────────────────────────
-const ProductDetails = ({ product, isOpen, onClose, addItem }: any) => {
-  const [activeImg, setActiveImg] = useState(product?.image_url);
-  const [adding, setAdding] = useState(false);
-  useEffect(() => { if (product) setActiveImg(product.image_url); }, [product]);
-  if (!product) return null;
-
-  const handleAdd = async () => {
-    setAdding(true);
-    await new Promise(r => setTimeout(r, 500));
-    addItem(product);
-    setAdding(false);
-    onClose();
-  };
-
-  const gallery = [product.image_url, ...(product.gallery || [])].filter(Boolean);
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={onClose} className="absolute inset-0 backdrop-blur-xl"
-            style={{ background: 'rgba(10,4,0,0.85)' }} />
-
-          {/* Drag indicator on mobile */}
-          <motion.div
-            initial={{ y: '100%', opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 28 }}
-            className="relative w-full sm:max-w-5xl max-h-[95vh] sm:max-h-[92vh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[3rem] shadow-2xl flex flex-col sm:grid sm:grid-cols-2"
-            style={{ background: '#FFFDFB' }}
-          >
-            {/* Barre drag mobile */}
-            <div className="flex justify-center pt-3 sm:hidden">
-              <div className="w-10 h-1 rounded-full bg-[#EAD8C0]" />
-            </div>
-
-            <motion.button whileHover={{ scale: 1.1, rotate: 90 }} onClick={onClose}
-              className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center border border-[#F5E6D3]">
-              <X size={18} className="text-[#5C3D2E]" />
-            </motion.button>
-
-            {/* Images */}
-            <div className="p-4 sm:p-8 space-y-4" style={{ background: 'linear-gradient(135deg, #FDF8F2, #FAF0E6)' }}>
-              <motion.div key={activeImg} initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 1, scale: 1 }}
-                className="aspect-[4/3] sm:aspect-[4/5] rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden border-4 border-white shadow-xl">
-                <img src={activeImg} className="w-full h-full object-cover" alt={product.name} />
-              </motion.div>
-              {gallery.length > 1 && (
-                <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
-                  {gallery.map((img: string, i: number) => (
-                    <motion.button key={i} whileHover={{ scale: 1.08 }} onClick={() => setActiveImg(img)}
-                      className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${activeImg === img ? 'border-[#C9A84C] shadow-lg' : 'border-transparent opacity-50 hover:opacity-90'}`}>
-                      <img src={img} className="w-full h-full object-cover" />
-                    </motion.button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Info */}
-            <div className="p-6 sm:p-10 flex flex-col justify-center bg-white">
-              <motion.span initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-                className="text-[#C9A84C] font-black uppercase tracking-[0.35em] text-[10px] mb-4 flex items-center gap-2">
-                <Sparkles size={10} /> Collection Privée Emma-Shop
-              </motion.span>
-              <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-                className="text-2xl sm:text-4xl font-serif font-black text-[#1A0800] mb-3 leading-tight">{product.name}</motion.h2>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
-                className="flex items-baseline gap-3 mb-4">
-                <span className="text-3xl sm:text-4xl font-black text-[#C9A84C]">{product.price} €</span>
-                {product.discount_price && <span className="text-lg sm:text-xl text-[#B48446]/40 line-through">{product.discount_price} €</span>}
-              </motion.div>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.12 }}
-                className="flex items-center gap-2 mb-4 sm:mb-6">
-                <div className={`w-2 h-2 rounded-full ${product.stock > 5 ? 'bg-green-400' : product.stock > 0 ? 'bg-yellow-400' : 'bg-red-400'}`} />
-                <span className="text-xs font-bold text-[#8B5E34]">
-                  {product.stock > 5 ? 'En stock' : product.stock > 0 ? `Plus que ${product.stock} disponibles` : 'Épuisé'}
-                </span>
-              </motion.div>
-              {product.description && (
-                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
-                  className="text-[#5C3D2E] leading-relaxed italic text-sm sm:text-base opacity-80 mb-6 sm:mb-8 border-t border-[#F5E6D3] pt-4 sm:pt-6">
-                  {product.description}
-                </motion.p>
-              )}
-              <motion.button whileHover={{ scale: 1.02, backgroundColor: '#8B5E34' }} whileTap={{ scale: 0.97 }}
-                onClick={handleAdd} disabled={adding || product.stock === 0}
-                className="w-full text-white py-4 sm:py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl flex items-center justify-center gap-3 disabled:opacity-50 transition-colors"
-                style={{ background: '#2D1B08' }}>
-                {adding
-                  ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}><Loader2 size={20} /></motion.div>
-                  : <><ShoppingCart size={20} /><span>{product.stock === 0 ? 'Épuisé' : 'Ajouter au panier'}</span></>
-                }
-              </motion.button>
-
-              {/* Safe area bottom on mobile */}
-              <div className="h-4 sm:h-0" />
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
-  );
-};
 
 // ─── CART DRAWER ──────────────────────────────────────────────────────────────
 const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
@@ -474,11 +369,11 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [activeCategory, setActiveCategory] = useState('Tous');
   const [toast, setToast] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>(['Tous']);
   const { items, addItem } = useCart();
+  const router = useRouter();
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   const heroY = useTransform(scrollY, [0, 500], [0, 120]);
@@ -525,8 +420,6 @@ export default function Home() {
   return (
     <div className="min-h-screen text-[#2D1B08]" style={{ background: '#FFFDFB' }}>
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-      <ProductDetails product={selectedProduct} isOpen={!!selectedProduct}
-        onClose={() => setSelectedProduct(null)} addItem={handleAddToCart} />
       <AnimatePresence>{toast && <Toast message={toast} onClose={() => setToast(null)} />}</AnimatePresence>
 
       {/* ── NAVBAR ── */}
@@ -697,7 +590,7 @@ export default function Home() {
                 <motion.div layout key={p.id}
                   initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ delay: Math.min(i * 0.06, 0.4), type: 'spring', damping: 20 }}
-                  className="group cursor-pointer" onClick={() => setSelectedProduct(p)}>
+                  className="group cursor-pointer" onClick={() => router.push(`/produit/${p.id}`)}>
                   <div className="relative aspect-[3/4] rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden border-2 sm:border-4 border-white shadow-lg group-hover:-translate-y-2 sm:group-hover:-translate-y-4 group-hover:shadow-2xl transition-all duration-500"
                     style={{ boxShadow: '0 8px 32px rgba(45,27,8,0.08)' }}>
                     <img src={p.image_url} className="w-full h-full object-cover scale-100 group-hover:scale-110 transition-transform duration-700" alt={p.name} />
@@ -723,7 +616,7 @@ export default function Home() {
                         <ShoppingCart size={13} /> Ajouter
                       </motion.button>
                       <motion.button whileHover={{ scale: 1.05 }}
-                        onClick={e => { e.stopPropagation(); setSelectedProduct(p); }}
+                        onClick={e => { e.stopPropagation(); router.push(`/produit/${p.id}`); }}
                         className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                         style={{ background: 'rgba(255,253,251,0.15)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
                         <ChevronRight size={14} className="text-white" />
