@@ -63,6 +63,9 @@ Copie `.env.local` en local, et reproduis ces variables sur **Vercel → Setting
 | `RESEND_API_KEY` | serveur | *(optionnel)* e-mail de commande à la boutique via [Resend](https://resend.com) |
 | `RESEND_FROM` | serveur | *(optionnel)* expéditeur vérifié Resend |
 | `SHOP_EMAIL` | serveur | *(optionnel)* e-mail destinataire (la boutique) |
+| `CLOUDINARY_CLOUD_NAME` | serveur | Cloud name Cloudinary (stockage images) |
+| `CLOUDINARY_API_KEY` | serveur | Clé API Cloudinary |
+| `CLOUDINARY_API_SECRET` | serveur | **Secret** API Cloudinary (upload signé) |
 
 > ⚠️ `SUPABASE_SERVICE_ROLE_KEY` est **secret** : jamais de préfixe `NEXT_PUBLIC`, jamais exposée au navigateur.
 

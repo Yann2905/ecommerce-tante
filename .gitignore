@@ -33,6 +33,12 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# MCP config (contient un token secret Supabase)
+.mcp.json
+
+# Sauvegardes de migration d'images (URLs, générées localement)
+scripts/backup-image-urls-*.json
+
 # vercel
 .vercel
 

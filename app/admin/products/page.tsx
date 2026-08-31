@@ -13,6 +13,37 @@ const CATEGORIES = [
   { id: 5, name: 'Accessoires' },
 ];
 
+/**
+ * Upload signé d'un fichier vers Cloudinary (direct navigateur → Cloudinary).
+ * La signature vient de notre serveur (/api/cloudinary-signature, réservé admin).
+ */
+async function uploadToCloudinary(file: File): Promise<string> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+
+  const sigRes = await fetch('/api/cloudinary-signature', {
+    method: 'POST',
+    headers: { Authorization: token ? `Bearer ${token}` : '' },
+  });
+  if (!sigRes.ok) throw new Error('Signature Cloudinary refusée (reconnecte-toi ?).');
+  const { signature, timestamp, apiKey, cloudName, folder } = await sigRes.json();
+
+  const form = new FormData();
+  form.append('file', file);
+  form.append('api_key', apiKey);
+  form.append('timestamp', String(timestamp));
+  form.append('signature', signature);
+  form.append('folder', folder);
+
+  const upRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+    method: 'POST',
+    body: form,
+  });
+  if (!upRes.ok) throw new Error("Échec de l'upload sur Cloudinary.");
+  const data = await upRes.json();
+  return data.secure_url as string;
+}
+
 export default function ManageProducts() {
   const [products, setProducts] = useState<any[]>([]);
   const [pageLoading, setPageLoading] = useState(true);
@@ -92,17 +123,13 @@ export default function ManageProducts() {
     try {
       let image_url = editProduct?.image_url || '';
       if (mainFile) {
-        const fileName = `main-${Date.now()}-${mainFile.name.replace(/\s/g, '_')}`;
-        await supabase.storage.from('products').upload(fileName, mainFile);
-        image_url = supabase.storage.from('products').getPublicUrl(fileName).data.publicUrl;
+        image_url = await uploadToCloudinary(mainFile);
       }
 
       // Upload des photos supplémentaires (galerie) puis fusion avec l'existant conservé
       const uploaded: string[] = [];
       for (const file of galleryFiles) {
-        const fileName = `gallery-${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${file.name.replace(/\s/g, '_')}`;
-        await supabase.storage.from('products').upload(fileName, file);
-        uploaded.push(supabase.storage.from('products').getPublicUrl(fileName).data.publicUrl);
+        uploaded.push(await uploadToCloudinary(file));
       }
       const gallery = [...galleryUrls, ...uploaded];
 
