@@ -20,6 +20,8 @@ export default function ManageProducts() {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [mainFile, setMainFile] = useState<File | null>(null);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]); // nouvelles photos à uploader
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([]); // photos déjà en base (édition)
   const [editProduct, setEditProduct] = useState<any | null>(null);
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState<number | 'all'>('all');
@@ -44,6 +46,8 @@ export default function ManageProducts() {
     setEditProduct(null);
     setMainFile(null);
     setPreview(null);
+    setGalleryFiles([]);
+    setGalleryUrls([]);
     setFormData({ name: '', price: 0, stock: 0, description: '', category_id: 1, discount_price: '', is_active: true });
     setIsModalOpen(true);
   };
@@ -52,6 +56,8 @@ export default function ManageProducts() {
     setEditProduct(p);
     setMainFile(null);
     setPreview(p.image_url || null);
+    setGalleryFiles([]);
+    setGalleryUrls(Array.isArray(p.gallery) ? p.gallery : []);
     setFormData({
       name: p.name, price: p.price, stock: p.stock,
       description: p.description || '', category_id: p.category_id || 1,
@@ -65,6 +71,21 @@ export default function ManageProducts() {
     if (file) setPreview(URL.createObjectURL(file));
   };
 
+  const MAX_GALLERY = 6;
+
+  const addGalleryFiles = (files: FileList | null) => {
+    if (!files) return;
+    const room = MAX_GALLERY - (galleryUrls.length + galleryFiles.length);
+    if (room <= 0) return;
+    setGalleryFiles(prev => [...prev, ...Array.from(files).slice(0, room)]);
+  };
+
+  const removeGalleryFile = (idx: number) =>
+    setGalleryFiles(prev => prev.filter((_, i) => i !== idx));
+
+  const removeGalleryUrl = (url: string) =>
+    setGalleryUrls(prev => prev.filter(u => u !== url));
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -76,6 +97,15 @@ export default function ManageProducts() {
         image_url = supabase.storage.from('products').getPublicUrl(fileName).data.publicUrl;
       }
 
+      // Upload des photos supplémentaires (galerie) puis fusion avec l'existant conservé
+      const uploaded: string[] = [];
+      for (const file of galleryFiles) {
+        const fileName = `gallery-${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${file.name.replace(/\s/g, '_')}`;
+        await supabase.storage.from('products').upload(fileName, file);
+        uploaded.push(supabase.storage.from('products').getPublicUrl(fileName).data.publicUrl);
+      }
+      const gallery = [...galleryUrls, ...uploaded];
+
       const payload = {
         ...formData,
         price: Number(formData.price),
@@ -83,6 +113,7 @@ export default function ManageProducts() {
         category_id: Number(formData.category_id),
         discount_price: formData.discount_price ? Number(formData.discount_price) : null,
         image_url,
+        gallery,
       };
 
       const method = editProduct ? 'PATCH' : 'POST';
@@ -417,6 +448,47 @@ export default function ManageProducts() {
                   </div>
                   <input type="file" accept="image/*" className="hidden" onChange={e => handleFileChange(e.target.files?.[0] || null)} />
                 </label>
+
+                {/* Autres photos (galerie) */}
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8B5E34]/60 mb-2 block">
+                    Autres photos ({galleryUrls.length + galleryFiles.length}/{MAX_GALLERY})
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    {/* Photos déjà en base */}
+                    {galleryUrls.map((url) => (
+                      <div key={url} className="relative w-20 h-20 rounded-2xl overflow-hidden border border-[#EAD8C0] group/g">
+                        <img src={url} alt="" className="w-full h-full object-cover" />
+                        <button type="button" onClick={() => removeGalleryUrl(url)}
+                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-[#1A0800]/70 text-white flex items-center justify-center opacity-0 group-hover/g:opacity-100 transition-opacity">
+                          <X size={11} />
+                        </button>
+                      </div>
+                    ))}
+                    {/* Nouvelles photos (pas encore uploadées) */}
+                    {galleryFiles.map((file, idx) => (
+                      <div key={idx} className="relative w-20 h-20 rounded-2xl overflow-hidden border border-[#C9A84C]/50 group/g">
+                        <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
+                        <button type="button" onClick={() => removeGalleryFile(idx)}
+                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-[#1A0800]/70 text-white flex items-center justify-center opacity-0 group-hover/g:opacity-100 transition-opacity">
+                          <X size={11} />
+                        </button>
+                      </div>
+                    ))}
+                    {/* Bouton d'ajout */}
+                    {galleryUrls.length + galleryFiles.length < MAX_GALLERY && (
+                      <label className="w-20 h-20 rounded-2xl border-2 border-dashed border-[#EAD8C0] hover:border-[#C9A84C]/60 flex flex-col items-center justify-center cursor-pointer transition-colors bg-[#FDF8F2]">
+                        <Plus size={18} className="text-[#C9A84C]" />
+                        <span className="text-[8px] font-black uppercase tracking-wider text-[#8B5E34]/60 mt-1">Ajouter</span>
+                        <input type="file" accept="image/*" multiple className="hidden"
+                          onChange={e => { addGalleryFiles(e.target.files); e.target.value = ''; }} />
+                      </label>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-[#8B5E34]/50 font-medium mt-2">
+                    Ces photos s'affichent sur la fiche produit (défilables). La photo principale reste la couverture.
+                  </p>
+                </div>
 
                 {/* Nom */}
                 <div>

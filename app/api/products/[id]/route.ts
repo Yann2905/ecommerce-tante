@@ -13,6 +13,7 @@ const ProductSchema = z.object({
   category_id: z.number().int().positive(),
   discount_price: z.number().positive().optional().nullable(),
   image_url: z.string().url(),
+  gallery: z.array(z.string().url()).max(6).optional(),
   is_active: z.boolean().optional(),
 });
 
