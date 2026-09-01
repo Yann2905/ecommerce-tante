@@ -1,8 +1,18 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "900"],
+  style: ["normal", "italic"],
+  variable: "--font-playfair",
+});
 
 const SITE_URL = "https://emmaashop.fr";
 const SITE_NAME = "Emmaashop";
@@ -75,8 +85,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr" className="h-full">
-      <body className={`${inter.className} min-h-full flex flex-col antialiased`}>
+    <html lang="fr" className={`h-full ${inter.variable} ${playfair.variable}`}>
+      <body className="font-sans min-h-full flex flex-col antialiased">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
