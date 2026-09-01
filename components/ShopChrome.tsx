@@ -43,8 +43,8 @@ export function ShopFooter() {
 export function ProductCard({ product }: { product: any }) {
   const addItem = useCart((state) => state.addItem);
   const price = product.discount_price || product.price;
-  return <article className="product-card group">
-    <Link href={`/produit/${product.id}`} className="block">
+  return <article className="product-card group flex h-full flex-col">
+    <Link href={`/produit/${product.id}`} className="flex flex-1 flex-col">
       <div className="product-image aspect-[.82] rounded-[3px]">
         {product.image_url ? <img src={product.image_url} alt={product.name}/> : <div className="h-full grid place-items-center text-sm text-[var(--muted)]">Emmaashop</div>}
         {product.discount_price && <span className="absolute left-3 top-3 rounded-full bg-[var(--coral)] px-3 py-1 text-[10px] font-bold text-white">Offre</span>}
