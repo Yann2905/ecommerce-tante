@@ -52,6 +52,6 @@ export function ProductCard({ product }: { product: any }) {
       </div>
       <div className="pt-4"><p className="text-[10px] uppercase tracking-[.15em] text-[var(--muted)]">{product.category || 'Collection'}</p><div className="mt-1 flex items-start justify-between gap-3"><h3 className="font-semibold text-sm leading-5">{product.name}</h3><Heart size={16} className="shrink-0 text-[var(--muted)]"/></div><div className="mt-2 flex gap-2 text-sm"><span className="font-bold">{price} €</span>{product.discount_price && <span className="text-[var(--muted)] line-through">{product.price} €</span>}</div></div>
     </Link>
-    {product.stock > 0 && <button onClick={() => addItem(product)} className="mt-4 w-full border-b border-[var(--ink)] pb-2 text-left text-[10px] font-bold uppercase tracking-[.16em] transition-colors hover:text-[var(--olive)]">Ajouter au panier <ArrowRight size={13} className="inline ml-1"/></button>}
+    {product.stock > 0 && <button onClick={() => addItem(product)} className="btn-primary mt-4 w-full">Ajouter au panier <ShoppingBag size={15}/></button>}
   </article>;
 }
