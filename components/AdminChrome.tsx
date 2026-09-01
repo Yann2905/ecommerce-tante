@@ -1,0 +1,12 @@
+'use client';
+import Link from 'next/link';
+import { LayoutDashboard, LogOut, Package, ShoppingBag, Store } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+
+export default function AdminChrome({ children, title, eyebrow }: { children: React.ReactNode; title: string; eyebrow: string }) {
+  const pathname = usePathname(); const router = useRouter();
+  const links = [{ href:'/admin', label:'Vue d’ensemble', icon:LayoutDashboard }, { href:'/admin/products', label:'Produits', icon:Package }, { href:'/admin/orders', label:'Commandes', icon:ShoppingBag }];
+  const logout = async () => { await supabase.auth.signOut(); router.replace('/login'); };
+  return <div className="min-h-screen bg-[var(--paper)] text-[var(--ink)]"><header className="sticky top-0 z-40 border-b border-[var(--line)] bg-white/95 backdrop-blur"><div className="container-shop flex h-[74px] items-center justify-between gap-5"><Link href="/admin" className="display text-2xl font-semibold tracking-[-.06em]">Emmaashop<span className="text-[var(--olive)]">.</span><span className="ml-2 hidden font-sans text-[9px] font-bold uppercase tracking-[.18em] text-[var(--muted)] sm:inline">Studio</span></Link><div className="flex items-center gap-4"><Link href="/" className="hidden items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[var(--muted)] hover:text-[var(--ink)] sm:flex"><Store size={15}/> Voir la boutique</Link><button onClick={logout} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[var(--muted)] hover:text-[var(--ink)]"><LogOut size={15}/> Sortir</button></div></div></header><div className="container-shop grid gap-10 py-8 lg:grid-cols-[190px_1fr] lg:py-12"><aside className="lg:sticky lg:top-28 lg:h-fit"><p className="eyebrow mb-4">Navigation</p><nav className="flex gap-2 overflow-x-auto lg:grid lg:gap-1">{links.map(({href,label,icon:Icon})=><Link key={href} href={href} className={`flex shrink-0 items-center gap-3 px-3 py-3 text-xs font-bold transition ${pathname===href?'bg-[var(--ink)] text-white':'text-[var(--muted)] hover:bg-white hover:text-[var(--ink)]'}`}><Icon size={16}/>{label}</Link>)}</nav></aside><main><div className="flex flex-col justify-between gap-5 border-b border-[var(--line)] pb-7 sm:flex-row sm:items-end"><div><p className="eyebrow">{eyebrow}</p><h1 className="display mt-2 text-5xl leading-none">{title}</h1></div></div>{children}</main></div></div>;
+}
