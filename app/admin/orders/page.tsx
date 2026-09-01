@@ -11,7 +11,7 @@ const STATUS:Record<string,{label:string;icon:any;className:string}>={en_attente
 
 export default function AdminOrders(){
   const router=useRouter(); const [orders,setOrders]=useState<Order[]>([]); const [selected,setSelected]=useState<Order|null>(null); const [filter,setFilter]=useState<'all'|'en_attente'|'livré'|'annulé'>('all'); const [loading,setLoading]=useState(true); const [updating,setUpdating]=useState(false);
-  const fetchOrders=async()=>{setLoading(true);const {data}=await supabase.from('orders').select('*, items:order_items(quantity, unit_price, product:products(name))').order('created_at',{ascending:false});setOrders((data as Order[])||[]);setLoading(false)};
+  const fetchOrders=async()=>{setLoading(true);const {data}=await supabase.from('orders').select('*, items:order_items(quantity, unit_price, product:products(name))').order('created_at',{ascending:false});const rows=(data as Order[])||[];setOrders(rows);const requested=new URLSearchParams(window.location.search).get('order');if(requested){const match=rows.find(order=>order.id===requested);if(match)setSelected(match)}setLoading(false)};
   useEffect(()=>{supabase.auth.getSession().then(({data})=>{if(!data.session){router.replace('/login');return;}fetchOrders()})},[router]);
   const filtered=useMemo(()=>orders.filter(o=>filter==='all'||o.status===filter),[orders,filter]);
   const total=orders.reduce((n,o)=>n+Number(o.total_price||0),0); const pending=orders.filter(o=>o.status==='en_attente').length;

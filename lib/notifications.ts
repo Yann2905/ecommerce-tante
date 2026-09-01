@@ -9,8 +9,8 @@ import { supabaseAdmin } from './supabase-admin';
  *
  * Variables requises (serveur) :
  *   - RESEND_API_KEY   : clé API Resend (https://resend.com)
- *   - RESEND_FROM      : expéditeur vérifié, ex "Emmaashop <commandes@ton-domaine.com>"
- *   - SHOP_EMAIL       : destinataire (l'e-mail de ta tante)
+ *   - RESEND_FROM      : expéditeur vérifié, par défaut "Emmaashop <contact@emmaashop.com>"
+ *   - SHOP_EMAIL       : destinataire, par défaut "sonya.carlach@gmail.com"
  */
 type OrderRow = {
   id: string;
@@ -24,26 +24,32 @@ type OrderItemInput = { product_id: string; quantity: number };
 
 export async function notifyNewOrder(order: OrderRow, items: OrderItemInput[]) {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM;
-  const to = process.env.SHOP_EMAIL;
+  // Valeurs Emmaashop par défaut ; les variables d’environnement restent prioritaires.
+  const from = process.env.RESEND_FROM || 'Emmaashop <contact@emmaashop.com>';
+  const to = process.env.SHOP_EMAIL || 'sonya.carlach@gmail.com';
 
   // Non configuré → on ne tente rien (pas d'erreur).
   if (!apiKey || !from || !to) return;
 
   try {
-    // Récupère les noms des produits pour un e-mail lisible.
+    // Récupère les noms et images des produits pour un e-mail lisible.
+
     const { data: products } = await supabaseAdmin
       .from('products')
-      .select('id, name')
+      .select('id, name, image_url')
       .in(
         'id',
         items.map((i) => i.product_id)
       );
 
-    const nameById = new Map((products ?? []).map((p) => [p.id, p.name]));
+    const productById = new Map((products ?? []).map((p) => [p.id, p]));
     const lines = items
-      .map((i) => `• ${nameById.get(i.product_id) ?? i.product_id} × ${i.quantity}`)
-      .join('<br>');
+      .map((i) => {
+        const product = productById.get(i.product_id);
+        const image = product?.image_url ? `<img src="${escapeHtml(product.image_url)}" alt="" width="72" style="width:72px;height:72px;object-fit:cover;vertical-align:middle;margin-right:10px;border-radius:6px">` : '';
+        return `<div style="margin:8px 0">${image}<strong>${escapeHtml(product?.name ?? i.product_id)}</strong> × ${i.quantity}</div>`;
+      })
+      .join('');
 
     const html = `
       <h2>🛍️ Nouvelle commande Emmaashop</h2>
