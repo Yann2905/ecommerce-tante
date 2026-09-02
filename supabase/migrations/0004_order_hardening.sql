@@ -24,17 +24,8 @@ alter table public.orders
   add column if not exists status text not null default 'en_attente',
   add column if not exists updated_at timestamptz not null default now();
 
--- Compatibilité avec les anciennes valeurs accentuées.
-update public.orders
-set status = case lower(coalesce(status, 'en_attente'))
-  when 'livré' then 'livree'
-  when 'livrée' then 'livree'
-  when 'annulé' then 'annulee'
-  when 'annulée' then 'annulee'
-  else lower(coalesce(status, 'en_attente'))
-end;
-
--- Les contraintes historiques éventuelles ne doivent pas empêcher les nouveaux statuts.
+-- Les contraintes historiques doivent être retirées avant de convertir les anciennes
+-- valeurs : sinon la conversion elle-même peut être rejetée par l’ancien CHECK.
 do $$
 declare
   constraint_row record;
@@ -49,6 +40,31 @@ begin
     execute format('alter table public.orders drop constraint if exists %I', constraint_row.conname);
   end loop;
 end $$;
+
+-- Compatibilité avec les anciennes valeurs accentuées et les alias anglais.
+update public.orders
+set status = case lower(btrim(coalesce(status, 'en_attente')))
+  when 'livré' then 'livree'
+  when 'livrée' then 'livree'
+  when 'delivered' then 'livree'
+  when 'annulé' then 'annulee'
+  when 'annulée' then 'annulee'
+  when 'cancelled' then 'annulee'
+  when 'canceled' then 'annulee'
+  when 'confirmée' then 'confirmee'
+  when 'confirmed' then 'confirmee'
+  when 'préparation' then 'en_preparation'
+  when 'en préparation' then 'en_preparation'
+  when 'processing' then 'en_preparation'
+  when 'shipped' then 'expediee'
+  when 'expédiée' then 'expediee'
+  when 'returned' then 'retournee'
+  when 'retournée' then 'retournee'
+  when 'pending' then 'en_attente'
+  when 'en attente' then 'en_attente'
+  when 'en_attente' then 'en_attente'
+  else 'en_attente'
+end;
 
 alter table public.orders
   drop constraint if exists orders_status_check;
