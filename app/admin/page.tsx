@@ -30,8 +30,7 @@ export default function AdminDashboard() {
         }
         setDashboard(await apiCall('/api/admin/dashboard'));
       } catch (err) {
-        if (String(err).includes('401') || String(err).toLowerCase().includes('accès')) router.replace('/login');
-        else setError(err instanceof Error ? err.message : 'Impossible de charger le tableau de bord.');
+        setError(err instanceof Error ? err.message : 'Impossible de charger le tableau de bord.');
       } finally {
         setLoading(false);
       }

@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getAuthUser } from '@/lib/auth';
+import { getAuthenticatedUser, isAdminUser } from '@/lib/auth';
 import { reportError } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  const user = await getAuthUser(request);
-  if (!user) return NextResponse.json({ error: 'Accès administrateur refusé.' }, { status: 401 });
-
+  const authenticatedUser = await getAuthenticatedUser(request);
+  if (!authenticatedUser) return NextResponse.json({ error: 'Session absente ou expirée.' }, { status: 401 });
+  if (!isAdminUser(authenticatedUser)) return NextResponse.json({ error: 'Compte connecté mais non autorisé à accéder à l’administration.' }, { status: 403 });
   try {
     const [{ data: products, error: productsError }, { data: orders, error: ordersError }] = await Promise.all([
       supabaseAdmin.from('products').select('id, name, stock, is_active, created_at').order('created_at', { ascending: false }),

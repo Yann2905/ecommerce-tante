@@ -19,13 +19,14 @@ export function ShopHeader() {
           <Link className="hover:text-[var(--olive)] transition-colors" href="/#collections">Collections</Link>
           <Link className="hover:text-[var(--olive)] transition-colors" href="/#maison">La maison</Link>
         </nav>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Link href="/login" className="hidden border border-[var(--ink)] px-3 py-2 text-[10px] font-bold uppercase tracking-[.12em] transition hover:bg-[var(--ink)] hover:text-white sm:inline-flex">Se connecter</Link>
           <button className="hidden sm:block hover:text-[var(--olive)]" aria-label="Rechercher"><Search size={19}/></button>
           <Link href="/cart" className="relative hover:text-[var(--olive)]" aria-label="Panier"><ShoppingBag size={20}/>{count > 0 && <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--coral)] px-1 text-[9px] text-white">{count}</span>}</Link>
         </div>
       </div>
       {open && <nav className="lg:hidden border-t border-[var(--line)] bg-[var(--paper)] px-5 py-5 grid gap-4 text-xs font-bold uppercase tracking-[.12em]">
-        <Link href="/#nouveautes" onClick={() => setOpen(false)}>Nouveautés</Link><Link href="/#collections" onClick={() => setOpen(false)}>Collections</Link><Link href="/#maison" onClick={() => setOpen(false)}>La maison</Link>
+        <Link href="/#nouveautes" onClick={() => setOpen(false)}>Nouveautés</Link><Link href="/#collections" onClick={() => setOpen(false)}>Collections</Link><Link href="/#maison" onClick={() => setOpen(false)}>La maison</Link><Link href="/login" onClick={() => setOpen(false)} className="border-t border-[var(--line)] pt-4">Se connecter</Link>
       </nav>}
     </header>
   </>;

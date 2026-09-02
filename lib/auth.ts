@@ -18,8 +18,8 @@ export function isAdminUser(user: { email?: string | null; app_metadata?: Record
   return Boolean(email && configuredAdminEmails().has(email));
 }
 
-/** Vérifie le Bearer token et confirme que l’utilisateur est un administrateur. */
-export async function getAuthUser(request: Request) {
+/** Récupère l’utilisateur correspondant au Bearer token, sans lui attribuer de droits. */
+export async function getAuthenticatedUser(request: Request) {
   const authHeader = request.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
 
@@ -31,6 +31,11 @@ export async function getAuthUser(request: Request) {
     error,
   } = await supabaseAdmin.auth.getUser(token);
 
-  if (error || !user || !isAdminUser(user)) return null;
-  return user;
+  return error || !user ? null : user;
+}
+
+/** Vérifie le Bearer token et confirme que l’utilisateur est un administrateur. */
+export async function getAuthUser(request: Request) {
+  const user = await getAuthenticatedUser(request);
+  return user && isAdminUser(user) ? user : null;
 }
