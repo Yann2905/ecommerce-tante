@@ -89,7 +89,11 @@ fois déployé.
 
 Les fonctions SQL vivent dans `supabase/migrations/`. À appliquer dans **Supabase → SQL Editor** (copier-coller le contenu du fichier) ou via la CLI `supabase db push` :
 
-- `0001_create_order_atomic.sql` — fonction `create_order` : création de commande **atomique** (vérif stock + verrou de ligne + décrément + prix recalculés serveur). **Requise** : `/api/orders` l'appelle. À exécuter avant tout déploiement qui utilise le nouveau flux de commande.
+- `0001_create_order_atomic.sql` — fonction `create_order` : création de commande **atomique** (vérif stock + verrou de ligne + décrément + prix recalculés serveur). **Requise** : `/api/orders` l'appelle.
+- `0002_products_gallery.sql` — ajoute `products.gallery`, le tableau contenant les images supplémentaires d'un produit. **Requise** pour ajouter plusieurs images depuis `/admin/products`.
+- `0003_customer_email.sql` — ajoute l'e-mail client aux commandes et met à jour `create_order`. **Requise** pour les confirmations e-mail client.
+
+À exécuter dans l'ordre avant tout déploiement qui utilise le catalogue multi-images et le nouveau flux de commande.
 
 ## Déploiement (Vercel)
 
