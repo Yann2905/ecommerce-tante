@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAuthUser } from '@/lib/auth';
 import { notifyNewOrder } from '@/lib/notifications';
 import { reportError } from '@/lib/observability';
+import { checkRateLimit, getClientAddress } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,10 @@ const CreateOrderSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const limit = checkRateLimit(`orders:${getClientAddress(request)}`);
+    if (!limit.allowed) {
+      return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans quelques minutes.' }, { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } });
+    }
     const body = await request.json();
     const parsed = CreateOrderSchema.safeParse(body);
 
@@ -77,7 +82,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabaseAdmin
     .from('orders')
-    .select('*, items:order_items(quantity, unit_price, variant:product_variants(label), product:products(name, image_url)), status_events:order_status_events(*)')
+    .select('id, customer_name, customer_email, customer_phone, delivery_address, total_price, status, created_at, updated_at, items:order_items(quantity, unit_price, variant:product_variants(label), product:products(name, image_url)), status_events:order_status_events(*)')
     .order('created_at', { ascending: false });
 
   if (error) {

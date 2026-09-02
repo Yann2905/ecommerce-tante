@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Identifiant produit invalide.' }, { status: 400 });
-  const { data, error } = await supabaseAdmin.from('products').select('*, categories(name)').eq('id', id).eq('is_active', true).single();
+  const { data, error } = await supabaseAdmin.from('products').select('id, name, description, price, discount_price, stock, category_id, image_url, gallery, is_active, categories(name)').eq('id', id).eq('is_active', true).single();
   if (error || !data) return NextResponse.json({ error: 'Produit introuvable.' }, { status: 404 });
   return NextResponse.json(data);
 }
