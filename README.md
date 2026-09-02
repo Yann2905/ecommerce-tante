@@ -69,8 +69,15 @@ Copie `.env.local` en local, et reproduis ces variables sur **Vercel → Setting
 | `CLOUDINARY_CLOUD_NAME` | serveur | Cloud name Cloudinary (stockage images) |
 | `CLOUDINARY_API_KEY` | serveur | Clé API Cloudinary |
 | `CLOUDINARY_API_SECRET` | serveur | **Secret** API Cloudinary (upload signé) |
+| `UPSTASH_REDIS_REST_URL` | serveur | URL REST de la base Redis Upstash (rate limiting distribué) |
+| `UPSTASH_REDIS_REST_TOKEN` | serveur | Token REST Upstash (**secret**) |
 
 > ⚠️ `SUPABASE_SERVICE_ROLE_KEY` est **secret** : jamais de préfixe `NEXT_PUBLIC`, jamais exposée au navigateur.
+> ⚠️ `UPSTASH_REDIS_REST_TOKEN` est **secret** : ajoute les deux variables dans Vercel → Settings → Environment Variables, jamais dans GitHub.
+
+### Rate limiting distribué Upstash
+
+La création de commande est limitée à 8 tentatives par adresse IP sur 10 minutes avec `@upstash/ratelimit` et Redis Upstash. En production, renseigne `UPSTASH_REDIS_REST_URL` et `UPSTASH_REDIS_REST_TOKEN` dans Vercel, puis redéploie le projet. Si ces variables sont absentes en local, le projet utilise automatiquement un limiter mémoire de secours pour permettre le développement.
 
 ## Démarrer en local
 

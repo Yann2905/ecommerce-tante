@@ -25,7 +25,7 @@ const CreateOrderSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const limit = checkRateLimit(`orders:${getClientAddress(request)}`);
+    const limit = await checkRateLimit(`orders:${getClientAddress(request)}`);
     if (!limit.allowed) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans quelques minutes.' }, { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } });
     }
