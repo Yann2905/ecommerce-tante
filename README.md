@@ -81,6 +81,12 @@ npm run dev
 
 Ouvre [http://localhost:3000](http://localhost:3000).
 
+## Installer le panel sur l’écran d’accueil
+
+Le panel possède maintenant un manifest PWA et des icônes dédiées. Après connexion à `/admin`, utilise le bouton **Installer l’app** affiché dans l’en-tête. Sur Android, le navigateur proposera l’installation. Sur iPhone, le bouton rappelle le chemin **Partager → Sur l’écran d’accueil → Ajouter** dans Safari. Une fois installée, l’icône ouvre directement Emmaashop Studio en mode application.
+
+L’installation doit être faite sur le domaine HTTPS de production, pas sur une adresse HTTP locale. La session Supabase est conservée par le navigateur ; il faut donc rester connecté au moment de l’installation.
+
 ## Sauvegardes et restauration
 
 Supabase doit être configuré avec ses sauvegardes automatiques selon le plan utilisé. Pour disposer d’un dump indépendant, installe `pg_dump`, renseigne `SUPABASE_DB_URL` dans un environnement privé, puis lance `npm run backup:db`. Le fichier est créé dans `backups/`, dossier ignoré par Git ; copie-le ensuite vers un stockage privé et teste régulièrement une restauration sur une base séparée.

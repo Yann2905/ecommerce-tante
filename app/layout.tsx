@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
@@ -19,6 +19,12 @@ const SITE_NAME = "Emmaashop";
 const DESCRIPTION =
   "Emmaashop, la boutique en ligne de mode et d'élégance africaine : boubous, caftans, robes et ensembles d'exception. Commande facile, livraison en Côte d'Ivoire et à l'international.";
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#1f2a24',
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -27,6 +33,19 @@ export const metadata: Metadata = {
   },
   description: DESCRIPTION,
   applicationName: SITE_NAME,
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
+  appleWebApp: {
+    capable: true,
+    title: 'Emmaashop Studio',
+    statusBarStyle: 'black-translucent',
+  },
   keywords: [
     "Emmaashop", "Emma shop", "emmashop", "Emma-Shop", "emmaashop.fr",
     "boutique mode africaine", "vêtements africains", "boubou", "caftan",
