@@ -63,6 +63,9 @@ Copie `.env.local` en local, et reproduis ces variables sur **Vercel → Setting
 | `RESEND_API_KEY` | serveur | *(optionnel)* e-mail de commande à la boutique via [Resend](https://resend.com) |
 | `RESEND_FROM` | serveur | *(optionnel)* expéditeur vérifié Resend |
 | `SHOP_EMAIL` | serveur | *(optionnel)* e-mail destinataire (la boutique) |
+| `ADMIN_EMAILS` | serveur | e-mails admin séparés par des virgules ; requis si le rôle Supabase n’est pas `admin` |
+| `ALERT_EMAIL` | serveur | *(optionnel)* destinataire des alertes d’erreur serveur via Resend |
+| `NEXT_PUBLIC_SITE_URL` | client/serveur | *(optionnel)* URL publique utilisée dans les confirmations |
 | `CLOUDINARY_CLOUD_NAME` | serveur | Cloud name Cloudinary (stockage images) |
 | `CLOUDINARY_API_KEY` | serveur | Clé API Cloudinary |
 | `CLOUDINARY_API_SECRET` | serveur | **Secret** API Cloudinary (upload signé) |
@@ -78,6 +81,12 @@ npm run dev
 
 Ouvre [http://localhost:3000](http://localhost:3000).
 
+## Sauvegardes et restauration
+
+Supabase doit être configuré avec ses sauvegardes automatiques selon le plan utilisé. Pour disposer d’un dump indépendant, installe `pg_dump`, renseigne `SUPABASE_DB_URL` dans un environnement privé, puis lance `npm run backup:db`. Le fichier est créé dans `backups/`, dossier ignoré par Git ; copie-le ensuite vers un stockage privé et teste régulièrement une restauration sur une base séparée.
+
+Ne place jamais `SUPABASE_DB_URL`, la clé `service_role` ou un dump dans une variable `NEXT_PUBLIC_*`.
+
 ## Anti-pause Supabase
 
 Le plan gratuit Supabase met le projet **en pause après ~7 jours d'inactivité**.
@@ -92,8 +101,10 @@ Les fonctions SQL vivent dans `supabase/migrations/`. À appliquer dans **Supaba
 - `0001_create_order_atomic.sql` — fonction `create_order` : création de commande **atomique** (vérif stock + verrou de ligne + décrément + prix recalculés serveur). **Requise** : `/api/orders` l'appelle.
 - `0002_products_gallery.sql` — ajoute `products.gallery`, le tableau contenant les images supplémentaires d'un produit. **Requise** pour ajouter plusieurs images depuis `/admin/products`.
 - `0003_customer_email.sql` — ajoute l'e-mail client aux commandes et met à jour `create_order`. **Requise** pour les confirmations e-mail client.
+- `0004_order_hardening.sql` — corrige les stocks négatifs existants, ajoute l’idempotence, le lien client non-admin, les statuts formels, l’historique et les transitions atomiques. **Requise** avant le nouveau checkout.
+- `0005_product_variants.sql` — ajoute les variantes taille/couleur/SKU et le stock par déclinaison. **Requise** pour utiliser l’éditeur de variantes.
 
-À exécuter dans l'ordre avant tout déploiement qui utilise le catalogue multi-images et le nouveau flux de commande.
+À exécuter dans l'ordre avant tout déploiement qui utilise le catalogue multi-images, les variantes et le nouveau flux de commande. Les migrations 0004 et 0005 sont conçues pour être rejouées, mais il est recommandé de faire une sauvegarde Supabase avant application.
 
 ## Déploiement (Vercel)
 
@@ -101,3 +112,9 @@ Les fonctions SQL vivent dans `supabase/migrations/`. À appliquer dans **Supaba
 2. Renseigne les variables d'environnement (voir tableau ci-dessus).
 3. Build : `npm run build` — install : `npm install --legacy-peer-deps`.
 4. Le cron s'enregistre automatiquement au déploiement.
+5. Configure `ADMIN_EMAILS` (ou attribue `app_metadata.role = admin` dans Supabase) pour chaque compte autorisé à l’administration.
+6. Configure `ALERT_EMAIL` et `RESEND_API_KEY` pour recevoir les erreurs serveur critiques ; les logs structurés restent également disponibles dans les logs Vercel.
+
+## Contrôles livrés
+
+Le checkout utilise une clé d’idempotence conservée pendant la tentative : un double-clic ou une réponse réseau perdue ne crée pas une seconde commande. Les lignes identiques sont agrégées avant le verrouillage et la décrémentation du stock. Les changements de statut passent par une transition SQL atomique et sont inscrits dans `order_status_events`. Une annulation restaure le stock une seule fois. L’espace client ne reçoit plus de lien vers `/admin`.

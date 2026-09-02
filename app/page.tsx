@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Loader2, Search, Heart } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { ProductCard, ShopFooter, ShopHeader } from '@/components/ShopChrome';
 
 export default function Home() {
@@ -10,9 +9,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('Tout');
-  useEffect(() => { supabase.from('products').select('*').eq('is_active', true).order('created_at', { ascending: false }).then(({ data }) => { setProducts(data || []); setLoading(false); }); }, []);
-  const categories = useMemo(() => ['Tout', ...Array.from(new Set(products.map((p) => p.category).filter(Boolean)))], [products]);
-  const filtered = products.filter((p) => (category === 'Tout' || p.category === category) && `${p.name} ${p.description || ''}`.toLowerCase().includes(query.toLowerCase()));
+  useEffect(() => { fetch('/api/products').then((response) => { if (!response.ok) throw new Error('Catalogue indisponible'); return response.json(); }).then((data) => setProducts(data || [])).catch(() => setProducts([])).finally(() => setLoading(false)); }, []);
+  const categories = useMemo(() => ['Tout', ...Array.from(new Set(products.map((p) => p.categories?.name || p.category).filter(Boolean)))], [products]);
+  const filtered = products.filter((p) => (category === 'Tout' || (p.categories?.name || p.category) === category) && `${p.name} ${p.description || ''}`.toLowerCase().includes(query.toLowerCase()));
   return <div><ShopHeader/><main>
     <section className="container-shop pt-7 md:pt-10"><div className="relative min-h-[560px] overflow-hidden rounded-[4px] bg-[#d9d3c6]"><img src="/tante-avec-fond.jpg" alt="Collection Emmaashop" className="absolute inset-0 h-full w-full object-cover object-[58%_30%]"/><div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/15 to-transparent"/><div className="relative flex min-h-[560px] max-w-xl flex-col justify-end p-7 pb-10 text-white md:p-14 md:pb-16"><p className="eyebrow !text-white/70 mb-5">Nouvelle collection · 2026</p><h1 className="display text-5xl leading-[.92] md:text-7xl">L’allure<br/><em>en héritage.</em></h1><p className="mt-6 max-w-sm text-sm leading-6 text-white/80">Des silhouettes pensées entre Abidjan, Paris et vos moments précieux.</p><a href="#nouveautes" className="btn-primary mt-8 w-fit !bg-white !text-[var(--ink)]">Découvrir la collection <ArrowRight size={16}/></a></div><div className="absolute right-5 top-5 hidden rounded-full border border-white/30 px-4 py-2 text-[10px] font-bold uppercase tracking-[.15em] text-white md:block">Fait avec intention</div></div></section>
     <section className="container-shop grid gap-5 border-b border-[var(--line)] py-7 text-center sm:grid-cols-3 sm:text-left"><div><p className="font-bold text-sm">Livraison soignée</p><p className="mt-1 text-xs text-[var(--muted)]">Dans toute la Côte d’Ivoire</p></div><div><p className="font-bold text-sm">Paiement à la livraison</p><p className="mt-1 text-xs text-[var(--muted)]">Simple, sûr, sans surprise</p></div><div><p className="font-bold text-sm">Une maison indépendante</p><p className="mt-1 text-xs text-[var(--muted)]">Des pièces choisies avec cœur</p></div></section>

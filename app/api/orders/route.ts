@@ -3,28 +3,25 @@ import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAuthUser } from '@/lib/auth';
 import { notifyNewOrder } from '@/lib/notifications';
+import { reportError } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
 
-// Le prix (unit_price / total_price) envoyé par le client est IGNORÉ :
-// la fonction SQL create_order relit les vrais prix en base. On l'accepte
-// en optionnel pour rester compatible avec les deux formulaires existants.
 const OrderItemSchema = z.object({
   product_id: z.string().uuid('ID produit invalide'),
   quantity: z.number().int().positive('Quantité invalide'),
-  unit_price: z.number().positive().optional(),
+  variant_id: z.string().uuid('Variante invalide').optional(),
 });
 
 const CreateOrderSchema = z.object({
-  customer_name: z.string().min(2, 'Nom trop court').max(100),
-  customer_phone: z.string().min(8, 'Numéro invalide').max(20),
-  customer_email: z.string().email('E-mail invalide').max(200),
-  delivery_address: z.string().max(300).optional().nullable(),
-  total_price: z.number().positive().optional(),
-  items: z.array(OrderItemSchema).min(1, 'Panier vide'),
+  customer_name: z.string().trim().min(2, 'Nom trop court').max(100),
+  customer_phone: z.string().trim().min(8, 'Numéro invalide').max(30),
+  customer_email: z.string().trim().email('E-mail invalide').max(200),
+  delivery_address: z.string().trim().max(300).optional().nullable(),
+  items: z.array(OrderItemSchema).min(1, 'Panier vide').max(100),
+  idempotency_key: z.string().uuid('Clé de commande invalide'),
 });
 
-// ✅ Public — un client passe commande. Le total est recalculé côté serveur.
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -32,64 +29,60 @@ export async function POST(request: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        {
-          error: 'Données de commande invalides',
-          details: parsed.error.flatten().fieldErrors,
-        },
-        { status: 400 }
+        { error: 'Données de commande invalides', details: parsed.error.flatten().fieldErrors },
+        { status: 400 },
       );
     }
 
-    const { customer_name, customer_phone, customer_email, delivery_address, items } = parsed.data;
-
-    // ✅ Création ATOMIQUE en base (vérif stock + verrou + décrément + prix
-    // serveur) via la fonction SQL create_order (voir supabase/migrations).
+    const { customer_name, customer_phone, customer_email, delivery_address, items, idempotency_key } = parsed.data;
     const { data: order, error } = await supabaseAdmin.rpc('create_order', {
       p_customer_name: customer_name,
       p_customer_phone: customer_phone,
       p_customer_email: customer_email,
       p_delivery_address: delivery_address ?? null,
-      p_items: items.map((i) => ({
-        product_id: i.product_id,
-        quantity: i.quantity,
-      })),
+      p_items: items,
+      p_idempotency_key: idempotency_key,
     });
 
     if (error) {
-      // Les erreurs métier (stock insuffisant, produit indisponible…) remontent
-      // comme exceptions Postgres → message clair, statut 400.
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      const status = /stock insuffisant|produit non disponible|panier vide|quantité invalide/i.test(error.message)
+        ? 409
+        : 400;
+      return NextResponse.json({ error: error.message }, { status });
     }
 
-    // 🔔 Notification e-mail à la boutique (best-effort, ne bloque pas la commande).
-    await notifyNewOrder(order, items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })));
+    const created = Boolean(order?._created ?? true);
+    if (created) {
+      await notifyNewOrder(order, items);
+    }
 
     return NextResponse.json(
-      { message: 'Commande réussie ! Le stock a été mis à jour.', order },
-      { status: 201 }
+      { message: created ? 'Commande réussie ! Le stock a été mis à jour.' : 'Commande déjà enregistrée.', order, created },
+      { status: created ? 201 : 200 },
     );
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    await reportError('orders.create', err);
+    return NextResponse.json({ error: 'Une erreur interne est survenue. Réessayez dans quelques instants.' }, { status: 500 });
   }
 }
 
-// ✅ Protégé — seule l'admin voit les commandes
 export async function GET(request: Request) {
   const user = await getAuthUser(request);
   if (!user) {
     return NextResponse.json(
-      { error: 'Accès refusé. Session invalide ou token manquant.' },
-      { status: 401 }
+      { error: 'Accès refusé. Session administrateur invalide ou token manquant.' },
+      { status: 401 },
     );
   }
 
   const { data, error } = await supabaseAdmin
     .from('orders')
-    .select('*, order_items(*, products(name, image_url))')
+    .select('*, items:order_items(quantity, unit_price, variant:product_variants(label), product:products(name, image_url)), status_events:order_status_events(*)')
     .order('created_at', { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    await reportError('orders.list', error);
+    return NextResponse.json({ error: 'Impossible de charger les commandes.' }, { status: 500 });
   }
   return NextResponse.json(data);
 }

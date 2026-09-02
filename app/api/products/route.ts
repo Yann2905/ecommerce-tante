@@ -1,67 +1,45 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAuthUser } from '@/lib/auth';
+import { reportError } from '@/lib/observability';
+import { ProductSchema } from '@/lib/product-validation';
 
-// Ces routes touchent la BDD : jamais de cache statique.
 export const dynamic = 'force-dynamic';
 
-const ProductSchema = z.object({
-  name: z.string().min(2),
-  description: z.string().optional().nullable(),
-  price: z.number().positive(),
-  stock: z.number().int().min(0),
-  category_id: z.number().int().positive(),
-  discount_price: z.number().positive().optional().nullable(),
-  image_url: z.string().url(),
-  gallery: z.array(z.string().url()).max(6).optional(),
-  is_active: z.boolean().optional().default(true),
-});
+export async function GET(request: Request) {
+  const isAdmin = new URL(request.url).searchParams.get('scope') === 'admin';
+  if (isAdmin && !await getAuthUser(request)) {
+    return NextResponse.json({ error: 'Accès administrateur refusé.' }, { status: 401 });
+  }
 
-// ✅ Public — liste tous les produits (admin : actifs + inactifs)
-export async function GET() {
-  const { data, error } = await supabaseAdmin
-    .from('products')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const query = supabaseAdmin.from('products').select('*, categories(name)').order('created_at', { ascending: false });
+  const { data, error } = isAdmin ? await query : await query.eq('is_active', true);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    await reportError('products.list', error, { scope: isAdmin ? 'admin' : 'public' });
+    return NextResponse.json({ error: 'Impossible de charger le catalogue.' }, { status: 500 });
   }
   return NextResponse.json(data);
 }
 
-// ✅ Protégé — création d'un produit (admin uniquement)
 export async function POST(request: Request) {
   const user = await getAuthUser(request);
-  if (!user) {
-    return NextResponse.json(
-      { error: 'Accès refusé. Session invalide ou token manquant.' },
-      { status: 401 }
-    );
-  }
+  if (!user) return NextResponse.json({ error: 'Accès administrateur refusé.' }, { status: 401 });
 
   try {
-    const body = await request.json();
-    const parsed = ProductSchema.safeParse(body);
+    const parsed = ProductSchema.safeParse(await request.json());
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Invalide', details: parsed.error.flatten().fieldErrors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Données produit invalides.', details: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    const { data, error } = await supabaseAdmin
-      .from('products')
-      .insert([parsed.data])
-      .select()
-      .single();
-
+    const { data, error } = await supabaseAdmin.from('products').insert([parsed.data]).select().single();
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      await reportError('products.create', error);
+      return NextResponse.json({ error: 'Impossible de créer le produit.' }, { status: 500 });
     }
     return NextResponse.json(data, { status: 201 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    await reportError('products.create', err);
+    return NextResponse.json({ error: 'Impossible de créer le produit.' }, { status: 500 });
   }
 }

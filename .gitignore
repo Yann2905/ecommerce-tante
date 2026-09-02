@@ -36,7 +36,8 @@ yarn-error.log*
 # MCP config (contient un token secret Supabase)
 .mcp.json
 
-# Sauvegardes de migration d'images (URLs, générées localement)
+# Sauvegardes locales de base et d’images : ne jamais versionner
+/backups/
 scripts/backup-image-urls-*.json
 
 # vercel
