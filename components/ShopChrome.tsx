@@ -11,9 +11,9 @@ export function ShopHeader() {
   return <>
     <div className="bg-[var(--ink)] text-white text-center py-2 text-[10px] uppercase tracking-[.18em] font-bold">Livraison offerte dès 75 € · Paiement à la livraison</div>
     <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[var(--paper)]/95 backdrop-blur">
-      <div className="container-shop h-[76px] flex items-center justify-between gap-6">
-        <button className="lg:hidden" onClick={() => setOpen(!open)} aria-label="Menu">{open ? <X size={21}/> : <Menu size={21}/>}</button>
-        <Link href="/" className="display text-[29px] font-semibold tracking-[-.07em]">Emmaashop<span className="text-[var(--olive)]">.</span></Link>
+      <div className="container-shop flex min-h-[64px] items-center justify-between gap-3 py-3 sm:h-[76px] sm:gap-6 sm:py-0">
+        <button className="grid h-10 w-10 place-items-center lg:hidden" onClick={() => setOpen(!open)} aria-label="Menu">{open ? <X size={21}/> : <Menu size={21}/>}</button>
+        <Link href="/" className="display text-2xl font-semibold tracking-[-.07em] sm:text-[29px]">Emmaashop<span className="text-[var(--olive)]">.</span></Link>
         <nav className="hidden lg:flex items-center gap-8 text-[11px] font-bold uppercase tracking-[.12em]">
           <Link className="hover:text-[var(--olive)] transition-colors" href="/#nouveautes">Nouveautés</Link>
           <Link className="hover:text-[var(--olive)] transition-colors" href="/#collections">Collections</Link>
@@ -25,7 +25,7 @@ export function ShopHeader() {
           <Link href="/cart" className="relative hover:text-[var(--olive)]" aria-label="Panier"><ShoppingBag size={20}/>{count > 0 && <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--coral)] px-1 text-[9px] text-white">{count}</span>}</Link>
         </div>
       </div>
-      {open && <nav className="lg:hidden border-t border-[var(--line)] bg-[var(--paper)] px-5 py-5 grid gap-4 text-xs font-bold uppercase tracking-[.12em]">
+      {open && <nav className="grid gap-4 border-t border-[var(--line)] bg-[var(--paper)] px-5 py-5 text-xs font-bold uppercase tracking-[.12em]">
         <Link href="/#nouveautes" onClick={() => setOpen(false)}>Nouveautés</Link><Link href="/#collections" onClick={() => setOpen(false)}>Collections</Link><Link href="/#maison" onClick={() => setOpen(false)}>La maison</Link><Link href="/login" onClick={() => setOpen(false)} className="border-t border-[var(--line)] pt-4">Se connecter</Link>
       </nav>}
     </header>
