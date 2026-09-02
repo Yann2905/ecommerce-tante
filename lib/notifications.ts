@@ -16,7 +16,7 @@ type ProductRow = { id: string; name: string; image_url?: string | null };
 /** Envoie les notifications sans jamais faire échouer la création de commande. */
 export async function notifyNewOrder(order: OrderRow, items: OrderItemInput[]) {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM || 'Emmaashop <contact@emmaashop.com>';
+  const from = process.env.RESEND_FROM || 'Emmaashop <contact@emmaashop.fr>';
   const ownerEmail = process.env.SHOP_EMAIL || 'sonya.carlach@gmail.com';
   if (!apiKey) return;
 
