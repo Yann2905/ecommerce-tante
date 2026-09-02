@@ -18,6 +18,7 @@ const OrderItemSchema = z.object({
 const CreateOrderSchema = z.object({
   customer_name: z.string().min(2, 'Nom trop court').max(100),
   customer_phone: z.string().min(8, 'Numéro invalide').max(20),
+  customer_email: z.string().email('E-mail invalide').max(200),
   delivery_address: z.string().max(300).optional().nullable(),
   total_price: z.number().positive().optional(),
   items: z.array(OrderItemSchema).min(1, 'Panier vide'),
@@ -39,13 +40,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const { customer_name, customer_phone, delivery_address, items } = parsed.data;
+    const { customer_name, customer_phone, customer_email, delivery_address, items } = parsed.data;
 
     // ✅ Création ATOMIQUE en base (vérif stock + verrou + décrément + prix
     // serveur) via la fonction SQL create_order (voir supabase/migrations).
     const { data: order, error } = await supabaseAdmin.rpc('create_order', {
       p_customer_name: customer_name,
       p_customer_phone: customer_phone,
+      p_customer_email: customer_email,
       p_delivery_address: delivery_address ?? null,
       p_items: items.map((i) => ({
         product_id: i.product_id,
