@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowRight, Heart, Menu, Search, ShoppingBag, X } from 'lucide-react';
 import { useCart } from '@/lib/store';
 import { useState } from 'react';
+import { IMAGE_WIDTHS, productImageSrcSet, productImageUrl } from '@/lib/images';
 
 export function ShopHeader() {
   const count = useCart((state) => state.items.reduce((n, item) => n + item.quantity, 0));
@@ -47,7 +48,7 @@ export function ProductCard({ product }: { product: any }) {
   return <article className="product-card group flex h-full flex-col">
     <Link href={`/produit/${product.id}`} className="flex flex-1 flex-col">
       <div className="product-image aspect-[.82] rounded-[3px]">
-        {product.image_url ? <img src={product.image_url} alt={product.name}/> : <div className="h-full grid place-items-center text-sm text-[var(--muted)]">Emmaashop</div>}
+        {product.image_url ? <img src={productImageUrl(product.image_url, 400)} srcSet={productImageSrcSet(product.image_url, [...IMAGE_WIDTHS.card])} sizes="(min-width:1024px) 25vw, (min-width:768px) 33vw, 50vw" alt={product.name} width={400} height={488} loading="lazy" decoding="async"/> : <div className="h-full grid place-items-center text-sm text-[var(--muted)]">Emmaashop</div>}
         {product.discount_price && <span className="absolute left-3 top-3 rounded-full bg-[var(--coral)] px-3 py-1 text-[10px] font-bold text-white">Offre</span>}
         {product.stock === 0 && <span className="absolute inset-x-3 bottom-3 rounded-full bg-white/90 py-2 text-center text-[10px] font-bold uppercase tracking-wider">Épuisé</span>}
       </div>
