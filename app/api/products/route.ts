@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   }
 
   const fields = isAdmin
-    ? 'id, name, description, price, discount_price, stock, category_id, image_url, gallery, is_active, created_at, updated_at, categories(name)'
+    ? 'id, name, description, price, discount_price, stock, category_id, image_url, gallery, is_active, created_at, categories(name)'
     : 'id, name, description, price, discount_price, stock, category_id, image_url, gallery, is_active, categories(name)';
   const query = supabaseAdmin.from('products').select(fields).order('created_at', { ascending: false });
   const { data, error } = isAdmin ? await query : await query.eq('is_active', true);
