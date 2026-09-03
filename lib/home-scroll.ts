@@ -14,15 +14,39 @@
  */
 const KEY = 'emmaashop-home-view';
 
+/**
+ * Verrou d'écriture.
+ *
+ * En quittant l'accueil pour une fiche produit, le routeur remet la page en haut.
+ * Cela déclenche un événement `scroll` alors que l'accueil n'est pas encore
+ * démonté : sans ce verrou, la position mémorisée était écrasée par un 0 juste
+ * avant la navigation, et le retour restaurait fidèlement… le haut de la page.
+ *
+ * Portée module : l'état survit à la navigation client, et disparaît au
+ * rechargement complet — exactement la durée de vie voulue.
+ */
+let locked = false;
+
 export type HomeView = { scrollY: number; query: string; category: string };
 
 export function saveHomeView(view: HomeView) {
+  if (locked) return;
   try {
     sessionStorage.setItem(KEY, JSON.stringify(view));
   } catch {
     // Navigation privée ou stockage plein : la restauration est un confort, pas
     // une fonctionnalité critique.
   }
+}
+
+/** Fige la position mémorisée le temps d'une navigation sortante. */
+export function lockHomeView() {
+  locked = true;
+}
+
+/** Rouvre l'écriture, au retour sur l'accueil une fois la position rejouée. */
+export function unlockHomeView() {
+  locked = false;
 }
 
 export function readHomeView(): HomeView | null {
@@ -43,6 +67,7 @@ export function readHomeView(): HomeView | null {
 
 /** Retour volontaire à l'accueil (clic sur le logo) : on repart du haut. */
 export function forgetHomeView() {
+  locked = false;
   try {
     sessionStorage.removeItem(KEY);
   } catch {

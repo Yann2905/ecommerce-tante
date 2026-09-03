@@ -11,7 +11,7 @@ import heroAfrica from '@/public/hero/hero-africa.jpg';
 import tanteDetouree from '@/public/tante-detouree.png';
 import matante from '@/public/matante.jpg';
 import { ProductCard, ShopFooter, ShopHeader } from '@/components/ShopChrome';
-import { readHomeView, saveHomeView } from '@/lib/home-scroll';
+import { lockHomeView, readHomeView, saveHomeView, unlockHomeView } from '@/lib/home-scroll';
 
 export default function Home() {
   const [products, setProducts] = useState<any[]>([]);
@@ -25,6 +25,8 @@ export default function Home() {
   const [viewReady, setViewReady] = useState(false);
   useEffect(() => {
     if (loading || viewReady) return;
+    // On revient sur l'accueil : l'écriture peut reprendre.
+    unlockHomeView();
     // Une ancre explicite dans l'URL (/#nouveautes) exprime une intention : elle
     // prime sur la position mémorisée.
     const anchored = Boolean(window.location.hash);
@@ -41,7 +43,13 @@ export default function Home() {
     // Deux frames : la première laisse React réappliquer les filtres, la seconde
     // laisse le navigateur mesurer la grille avant qu'on repositionne.
     requestAnimationFrame(() => requestAnimationFrame(() => {
+      // globals.css applique scroll-behavior:smooth : sans neutralisation, la
+      // reprise de position serait une longue glissade animée, interruptible.
+      const root = document.documentElement;
+      const previous = root.style.scrollBehavior;
+      root.style.scrollBehavior = 'auto';
       window.scrollTo(0, saved.scrollY);
+      root.style.scrollBehavior = previous;
       setViewReady(true);
     }));
   }, [loading, viewReady]);
@@ -53,9 +61,25 @@ export default function Home() {
     let frame = 0;
     const remember = () => saveHomeView({ scrollY: window.scrollY, query, category });
     const onScroll = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(remember); };
+    // Au clic vers une fiche produit, on fige la position AVANT que le routeur ne
+    // remonte la page en haut : ce scroll automatique écrasait sinon la valeur.
+    const onLeave = (event: Event) => {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest?.('a[href^="/produit/"]')) return;
+      cancelAnimationFrame(frame);
+      remember();
+      lockHomeView();
+    };
     remember();
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => { cancelAnimationFrame(frame); window.removeEventListener('scroll', onScroll); };
+    document.addEventListener('pointerdown', onLeave, true);
+    document.addEventListener('click', onLeave, true);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('pointerdown', onLeave, true);
+      document.removeEventListener('click', onLeave, true);
+    };
   }, [viewReady, query, category]);
   const categories = useMemo(() => ['Tout', ...Array.from(new Set(products.map((p) => p.categories?.name || p.category).filter(Boolean)))], [products]);
   const filtered = products.filter((p) => (category === 'Tout' || (p.categories?.name || p.category) === category) && `${p.name} ${p.description || ''}`.toLowerCase().includes(query.toLowerCase()));
