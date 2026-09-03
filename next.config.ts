@@ -11,6 +11,16 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  images: {
+    // Les sources de `public/` plafonnent à 1200 px : annoncer 1920/2048/3840
+    // ne produirait que des variantes upscalées, facturées et jamais utiles.
+    deviceSizes: [360, 480, 640, 828, 1080, 1200],
+    imageSizes: [96, 128, 256, 384],
+    // AVIF d'abord, WebP en repli. Les images produits passent par Cloudinary
+    // (voir lib/images.ts) et ne traversent pas cet optimiseur.
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60 * 60 * 24 * 30,
+  },
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }];
   },

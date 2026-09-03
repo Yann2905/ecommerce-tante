@@ -6,23 +6,33 @@ import { ProductSchema } from '@/lib/product-validation';
 
 export const dynamic = 'force-dynamic';
 
+const PRODUCT_FIELDS = 'id, name, description, price, discount_price, stock, category_id, image_url, gallery, is_active, created_at, categories(name)';
+
 export async function GET(request: Request) {
   const isAdmin = new URL(request.url).searchParams.get('scope') === 'admin';
   if (isAdmin && !await getAuthUser(request)) {
     return NextResponse.json({ error: 'Accès administrateur refusé.' }, { status: 401 });
   }
 
-  const fields = isAdmin
-    ? 'id, name, description, price, discount_price, stock, category_id, image_url, gallery, is_active, created_at, categories(name)'
-    : 'id, name, description, price, discount_price, stock, category_id, image_url, gallery, is_active, categories(name)';
-  const query = supabaseAdmin.from('products').select(fields).order('created_at', { ascending: false });
+  const query = supabaseAdmin.from('products').select(PRODUCT_FIELDS).order('created_at', { ascending: false });
   const { data, error } = isAdmin ? await query : await query.eq('is_active', true);
 
   if (error) {
     await reportError('products.list', error, { scope: isAdmin ? 'admin' : 'public' });
     return NextResponse.json({ error: 'Impossible de charger le catalogue.' }, { status: 500 });
   }
-  return NextResponse.json(data);
+
+  // Le catalogue public est identique pour tout le monde : le servir depuis le
+  // CDN évite un aller-retour Supabase à chaque visite. Contrepartie assumée :
+  // une modification produit peut mettre jusqu'à 60 s à apparaître en boutique.
+  // Le flux admin, lui, est nominatif et ne doit jamais être mis en cache.
+  return NextResponse.json(data, {
+    headers: {
+      'Cache-Control': isAdmin
+        ? 'private, no-store'
+        : 'public, s-maxage=60, stale-while-revalidate=300',
+    },
+  });
 }
 
 export async function POST(request: Request) {
