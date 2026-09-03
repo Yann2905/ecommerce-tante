@@ -5,6 +5,7 @@ import { getAuthUser } from '@/lib/auth';
 import { notifyNewOrder } from '@/lib/notifications';
 import { reportError } from '@/lib/observability';
 import { checkRateLimit, getClientAddress } from '@/lib/rate-limit';
+import { requestSignals, sendServerPurchase } from '@/lib/marketing-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,9 @@ const CreateOrderSchema = z.object({
   delivery_address: z.string().trim().max(300).optional().nullable(),
   items: z.array(OrderItemSchema).min(1, 'Panier vide').max(100),
   idempotency_key: z.string().uuid('Clé de commande invalide'),
+  // Consentement marketing transmis par le navigateur : conditionne le seul envoi
+  // vers Meta/TikTok. Défaut à false — l'absence du champ ne vaut pas accord.
+  marketing_consent: z.boolean().optional().default(false),
 });
 
 export async function POST(request: Request) {
@@ -39,7 +43,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { customer_name, customer_phone, customer_email, delivery_address, items, idempotency_key } = parsed.data;
+    const { customer_name, customer_phone, customer_email, delivery_address, items, idempotency_key, marketing_consent } = parsed.data;
     const { data: order, error } = await supabaseAdmin.rpc('create_order', {
       p_customer_name: customer_name,
       p_customer_phone: customer_phone,
@@ -59,6 +63,19 @@ export async function POST(request: Request) {
     const created = Boolean(order?._created ?? true);
     if (created) {
       await notifyNewOrder(order, items);
+
+      // Purchase serveur : le montant vient de Postgres (order.total_price), jamais
+      // du panier envoyé par le navigateur. Best-effort, ne peut pas faire échouer
+      // une commande déjà enregistrée.
+      await sendServerPurchase(
+        {
+          orderId: order.id,
+          value: Number(order.total_price ?? 0),
+          contents: items.map((item) => ({ id: item.product_id, quantity: item.quantity })),
+        },
+        requestSignals(request),
+        marketing_consent,
+      );
     }
 
     return NextResponse.json(

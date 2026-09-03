@@ -71,9 +71,29 @@ Copie `.env.local` en local, et reproduis ces variables sur **Vercel → Setting
 | `CLOUDINARY_API_SECRET` | serveur | **Secret** API Cloudinary (upload signé) |
 | `UPSTASH_REDIS_REST_URL` | serveur | URL REST de la base Redis Upstash (rate limiting distribué) |
 | `UPSTASH_REDIS_REST_TOKEN` | serveur | Token REST Upstash (**secret**) |
+| `NEXT_PUBLIC_META_PIXEL_ID` | client | *(optionnel)* Pixel Meta — Events Manager |
+| `META_DATASET_ID` | serveur | *(optionnel)* Dataset Conversions API, si différent du Pixel ID |
+| `META_CONVERSIONS_API_ACCESS_TOKEN` | serveur | *(optionnel)* Token Conversions API (**secret**) |
+| `NEXT_PUBLIC_TIKTOK_PIXEL_ID` | client | *(optionnel)* Pixel TikTok — Events Manager |
+| `TIKTOK_EVENTS_API_ACCESS_TOKEN` | serveur | *(optionnel)* Token TikTok Events API (**secret**) |
+| `NEXT_PUBLIC_ADS_CURRENCY` | client/serveur | Devise envoyée aux régies (défaut `EUR`) |
+| `NEXT_PUBLIC_TIKTOK_PURCHASE_EVENT` | client/serveur | Nom TikTok de l’achat (défaut `CompletePayment`) — **à confirmer dans TikTok Events Manager** |
 
 > ⚠️ `SUPABASE_SERVICE_ROLE_KEY` est **secret** : jamais de préfixe `NEXT_PUBLIC`, jamais exposée au navigateur.
 > ⚠️ `UPSTASH_REDIS_REST_TOKEN` est **secret** : ajoute les deux variables dans Vercel → Settings → Environment Variables, jamais dans GitHub.
+> ⚠️ `META_CONVERSIONS_API_ACCESS_TOKEN` et `TIKTOK_EVENTS_API_ACCESS_TOKEN` sont **secrets** : jamais de préfixe `NEXT_PUBLIC`, jamais dans GitHub ni dans une capture d’écran.
+
+### Suivi publicitaire Meta & TikTok
+
+Tant qu’aucun Pixel ID n’est renseigné, toute la couche publicitaire est **inerte** : aucun script tiers n’est chargé, aucun événement n’est émis, la bannière de consentement ne s’affiche pas. Renseigner les variables suffit à l’activer, sans modification de code.
+
+**Consentement.** Aucun traceur Meta/TikTok n’est déposé avant acceptation explicite (`lib/consent.ts`). Le refus est persistant et modifiable depuis `/confidentialite`. La mesure d’audience interne (`/api/analytics`) reste indépendante : anonymisée, sans IP, sans transfert tiers.
+
+**Événements.** Un point d’entrée unique, `trackMarketingEvent` (`lib/marketing.ts`), alimente les deux régies : `PageView`, `ViewContent`, `AddToCart`, `InitiateCheckout`, `Purchase`, `Contact`. Aucun événement n’est émis sur `/admin` ni `/login`.
+
+**Déduplication.** `Purchase` part deux fois — depuis le navigateur et depuis `/api/orders` (`lib/marketing-server.ts`) — avec `event_id = order.id` de part et d’autre. Le montant serveur provient de Postgres, jamais du panier client. L’idempotence de `create_order` garantit un seul `order.id` par commande, donc un seul achat comptabilisé même en cas de double-clic.
+
+> ⚠️ **CSP.** Les domaines Meta et TikTok sont déclarés dans `next.config.ts`. Un domaine manquant fait échouer le chargement d’un pixel **en silence**, sans erreur JS et sans rien dans Events Manager. En cas d’événements absents, vérifier d’abord la console du navigateur (« Refused to load / Refused to connect ») avant de suspecter la configuration Meta ou TikTok.
 
 ### Rate limiting distribué Upstash
 
@@ -116,6 +136,8 @@ Les fonctions SQL vivent dans `supabase/migrations/`. À appliquer dans **Supaba
 - `0003_customer_email.sql` — ajoute l'e-mail client aux commandes et met à jour `create_order`. **Requise** pour les confirmations e-mail client.
 - `0004_order_hardening.sql` — corrige les stocks négatifs existants, ajoute l’idempotence, le lien client non-admin, les statuts formels, l’historique et les transitions atomiques. **Requise** avant le nouveau checkout.
 - `0005_product_variants.sql` — ajoute les variantes taille/couleur/SKU et le stock par déclinaison. **Requise** pour utiliser l’éditeur de variantes.
+- `0006_operational_logs.sql` — table `app_logs`. **Requise** : `reportError` y écrit les erreurs serveur.
+- `0007_site_analytics.sql` — table `site_activities` et fonction `get_site_analytics`. **Requise** pour `/admin/analytics` et pour la mesure du tunnel (`add_to_cart`, `checkout_started`, `order_created`).
 
 À exécuter dans l'ordre avant tout déploiement qui utilise le catalogue multi-images, les variantes et le nouveau flux de commande. Les migrations 0004 et 0005 sont conçues pour être rejouées, mais il est recommandé de faire une sauvegarde Supabase avant application.
 

@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Heart, Minus, Plus, ShoppingBag } from 'lucide-react';
 import { useCart, type CartVariant } from '@/lib/store';
 import { ShopFooter, ShopHeader, ProductCard } from '@/components/ShopChrome';
+import { trackMarketingEvent } from '@/lib/marketing';
+import { sendInternalEvent } from '@/lib/analytics-client';
 
 type Variant = { id: string; label: string; size?: string | null; color?: string | null; stock: number; is_active: boolean };
 
@@ -42,6 +44,20 @@ export default function ProductView({ id }: { id?: string }) {
   const activeVariant = useMemo(() => variants.find((variant) => variant.id === selectedVariantId) ?? null, [variants, selectedVariantId]);
   const availableStock = activeVariant ? Number(activeVariant.stock) : Number(product?.stock ?? 0);
 
+  // ViewContent une seule fois par produit réellement chargé. Le garde par ref est
+  // nécessaire : reactStrictMode rejoue les effets en développement.
+  const viewedProductId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!product?.id || viewedProductId.current === product.id) return;
+    viewedProductId.current = product.id;
+    const unitPrice = Number(product.discount_price || product.price) || 0;
+    trackMarketingEvent('ViewContent', {
+      contents: [{ id: product.id, quantity: 1, name: product.name, price: unitPrice }],
+      value: unitPrice,
+      contentName: product.name,
+    });
+  }, [product]);
+
   if (!product) return <><ShopHeader/><div className="container-shop min-h-[60vh] grid place-items-center text-sm text-[var(--muted)]">Chargement de la pièce…</div><ShopFooter/></>;
 
   const gallery = [product.image_url, ...(Array.isArray(product.gallery) ? product.gallery : [])].filter(Boolean) as string[];
@@ -56,6 +72,15 @@ export default function ProductView({ id }: { id?: string }) {
     if (availableStock < 1) return;
     const variant: CartVariant | undefined = activeVariant ? { id: activeVariant.id, label: activeVariant.label, size: activeVariant.size ?? undefined, color: activeVariant.color ?? undefined } : undefined;
     for (let index = 0; index < qty; index += 1) addItem(product, variant);
+
+    // Un clic = un seul AddToCart, quantité comprise — surtout pas un par tour de boucle.
+    const unitPrice = Number(price) || 0;
+    trackMarketingEvent('AddToCart', {
+      contents: [{ id: product.id, quantity: qty, name: product.name, price: unitPrice }],
+      value: unitPrice * qty,
+    });
+    sendInternalEvent('add_to_cart');
+
     setVariantError('');
     setAdded(true);
     setTimeout(() => setAdded(false), 1800);

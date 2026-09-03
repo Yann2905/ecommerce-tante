@@ -6,7 +6,9 @@ import { getAuthenticatedUser, isAdminUser } from '@/lib/auth';
 export const dynamic = 'force-dynamic';
 
 const EventSchema = z.object({
-  eventType: z.enum(['page_view', 'product_view', 'add_to_cart', 'checkout_started']),
+  // Doit rester aligné sur la contrainte CHECK de site_activities (migration 0007) :
+  // un type absent d'ici est rejeté en 400 même si Postgres l'accepterait.
+  eventType: z.enum(['page_view', 'product_view', 'add_to_cart', 'checkout_started', 'order_created']),
   path: z.string().trim().min(1).max(500).regex(/^\//),
 });
 

@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import AnalyticsTracker from '@/components/AnalyticsTracker';
+import ConsentBanner from '@/components/ConsentBanner';
+import MarketingPixels from '@/components/MarketingPixels';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -108,11 +110,14 @@ export default function RootLayout({
     <html lang="fr" className={`h-full ${inter.variable} ${playfair.variable}`}>
       <body className="font-sans min-h-full flex flex-col antialiased">
         <AnalyticsTracker />
+        {/* Charge Meta/TikTok uniquement après consentement marketing explicite. */}
+        <MarketingPixels />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {children}
+        <ConsentBanner />
       </body>
     </html>
   );

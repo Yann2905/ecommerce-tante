@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { ArrowRight, Heart, Menu, Search, ShoppingBag, X } from 'lucide-react';
 import { useCart } from '@/lib/store';
 import { useState } from 'react';
+import { trackMarketingEvent } from '@/lib/marketing';
+import { sendInternalEvent } from '@/lib/analytics-client';
 
 export function ShopHeader() {
   const count = useCart((state) => state.items.reduce((n, item) => n + item.quantity, 0));
@@ -44,6 +46,19 @@ export function ShopFooter() {
 export function ProductCard({ product }: { product: any }) {
   const addItem = useCart((state) => state.addItem);
   const price = product.discount_price || product.price;
+
+  // La valeur envoyée aux régies doit refléter le prix réellement payé : le prix
+  // promo s'il existe, jamais le prix barré.
+  const add = () => {
+    addItem(product);
+    const value = Number(price) || 0;
+    trackMarketingEvent('AddToCart', {
+      contents: [{ id: product.id, quantity: 1, name: product.name, price: value }],
+      value,
+    });
+    sendInternalEvent('add_to_cart');
+  };
+
   return <article className="product-card group flex h-full flex-col">
     <Link href={`/produit/${product.id}`} className="flex flex-1 flex-col">
       <div className="product-image aspect-[.82] rounded-[3px]">
@@ -53,6 +68,6 @@ export function ProductCard({ product }: { product: any }) {
       </div>
       <div className="pt-4"><p className="text-[10px] uppercase tracking-[.15em] text-[var(--muted)]">{product.categories?.name || product.category || 'Collection'}</p><div className="mt-1 flex items-start justify-between gap-3"><h3 className="font-semibold text-sm leading-5">{product.name}</h3><Heart size={16} className="shrink-0 text-[var(--muted)]"/></div><div className="mt-2 flex gap-2 text-sm"><span className="font-bold">{price} €</span>{product.discount_price && <span className="text-[var(--muted)] line-through">{product.price} €</span>}</div></div>
     </Link>
-    {product.stock > 0 && <button onClick={() => addItem(product)} className="btn-primary mt-4 w-full">Ajouter au panier <ShoppingBag size={15}/></button>}
+    {product.stock > 0 && <button onClick={add} className="btn-primary mt-4 w-full">Ajouter au panier <ShoppingBag size={15}/></button>}
   </article>;
 }
