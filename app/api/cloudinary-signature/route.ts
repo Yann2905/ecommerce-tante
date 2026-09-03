@@ -31,11 +31,20 @@ export async function POST(request: Request) {
   const timestamp = Math.round(Date.now() / 1000);
   const folder = 'emma-shop/products';
 
-  // Signe uniquement les paramètres qui seront envoyés (folder + timestamp).
+  /**
+   * Transformation appliquée à l'ENTRÉE : ce qui est stocké chez Cloudinary est
+   * déjà borné, au lieu de conserver le fichier brut de l'appareil photo (souvent
+   * plusieurs Mo pour 4000 px de large). La livraison reste plafonnée à ~1280 px
+   * par lib/images.ts, donc 2000 px couvrent largement tous les usages du site.
+   * Sans cela, chaque nouvelle photo repartait en original pleine résolution.
+   */
+  const transformation = 'c_limit,w_2000,q_auto:good';
+
+  // Tous les paramètres signés doivent être renvoyés à l'identique par le client.
   const signature = cloudinary.utils.api_sign_request(
-    { timestamp, folder },
+    { timestamp, folder, transformation },
     apiSecret
   );
 
-  return NextResponse.json({ signature, timestamp, apiKey, cloudName, folder });
+  return NextResponse.json({ signature, timestamp, apiKey, cloudName, folder, transformation });
 }

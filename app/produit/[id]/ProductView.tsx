@@ -10,10 +10,7 @@ import { IMAGE_WIDTHS, productImageSrcSet, productImageUrl } from '@/lib/images'
 
 type Variant = { id: string; label: string; size?: string | null; color?: string | null; stock: number; is_active: boolean };
 
-export default function ProductView({ id }: { id?: string }) {
-  const [product, setProduct] = useState<any>(null);
-  const [variants, setVariants] = useState<Variant[]>([]);
-  const [similar, setSimilar] = useState<any[]>([]);
+export default function ProductView({ product, variants, similar }: { product: any; variants: Variant[]; similar: any[] }) {
   const [qty, setQty] = useState(1);
   const [activeIndex, setActiveIndex] = useState(0);
   const [selectedVariantId, setSelectedVariantId] = useState('');
@@ -21,35 +18,9 @@ export default function ProductView({ id }: { id?: string }) {
   const [variantError, setVariantError] = useState('');
   const addItem = useCart((state) => state.addItem);
 
-  useEffect(() => {
-    const productId = id || window.location.pathname.split('/').pop();
-    if (!productId) return;
-    void (async () => {
-      const [productResponse, variantsResponse, productsResponse] = await Promise.all([
-        fetch(`/api/products/${productId}`),
-        fetch(`/api/products/${productId}/variants`).catch(() => null),
-        fetch('/api/products').catch(() => null),
-      ]);
-      const data = productResponse.ok ? await productResponse.json() : null;
-      setProduct(data);
-      setActiveIndex(0);
-      if (variantsResponse?.ok) setVariants(await variantsResponse.json());
-      if (productsResponse?.ok) {
-        const allProducts: any[] = (await productsResponse.json()) || [];
-        const others = allProducts.filter((item) => item.id !== productId);
-        // Même catégorie d'abord, puis le reste du catalogue : une catégorie qui ne
-        // contient qu'un seul article ne doit pas laisser un bas de page vide.
-        const sameCategory = data?.category_id ? others.filter((item) => item.category_id === data.category_id) : [];
-        const sameCategoryIds = new Set(sameCategory.map((item) => item.id));
-        setSimilar([...sameCategory, ...others.filter((item) => !sameCategoryIds.has(item.id))].slice(0, 12));
-      }
-    })();
-  }, [id]);
-
   const activeVariant = useMemo(() => variants.find((variant) => variant.id === selectedVariantId) ?? null, [variants, selectedVariantId]);
   const availableStock = activeVariant ? Number(activeVariant.stock) : Number(product?.stock ?? 0);
 
-  if (!product) return <><ShopHeader/><div className="container-shop min-h-[60vh] grid place-items-center text-sm text-[var(--muted)]">Chargement de la pièce…</div><ShopFooter/></>;
 
   const gallery = [product.image_url, ...(Array.isArray(product.gallery) ? product.gallery : [])].filter(Boolean) as string[];
   const activeImage = gallery[activeIndex] || gallery[0];

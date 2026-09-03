@@ -17,7 +17,7 @@ async function uploadToCloudinary(file: File): Promise<string> {
   const { data } = await supabase.auth.getSession(); const token = data.session?.access_token;
   const sigRes = await fetch('/api/cloudinary-signature',{method:'POST',headers:{Authorization:token?`Bearer ${token}`:''}});
   if(!sigRes.ok) throw new Error('La signature Cloudinary a été refusée. Reconnectez-vous.');
-  const {signature,timestamp,apiKey,cloudName,folder}=await sigRes.json(); const form=new FormData(); form.append('file',file); form.append('api_key',apiKey); form.append('timestamp',String(timestamp)); form.append('signature',signature); form.append('folder',folder);
+  const {signature,timestamp,apiKey,cloudName,folder,transformation}=await sigRes.json(); const form=new FormData(); form.append('file',file); form.append('api_key',apiKey); form.append('timestamp',String(timestamp)); form.append('signature',signature); form.append('folder',folder); if(transformation) form.append('transformation',transformation);
   const upRes=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{method:'POST',body:form}); if(!upRes.ok) throw new Error("Échec de l'upload image."); const result=await upRes.json(); return result.secure_url as string;
 }
 
