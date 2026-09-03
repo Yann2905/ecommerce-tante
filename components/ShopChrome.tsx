@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowRight, Heart, Menu, Search, ShoppingBag, X } from 'lucide-react';
 import { useCart } from '@/lib/store';
 import { useState } from 'react';
+import { forgetHomeView } from '@/lib/home-scroll';
 import { IMAGE_WIDTHS, productImageSrcSet, productImageUrl } from '@/lib/images';
 
 export function ShopHeader() {
@@ -14,7 +15,7 @@ export function ShopHeader() {
     <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[var(--paper)]/95 backdrop-blur">
       <div className="container-shop flex min-h-[64px] items-center justify-between gap-3 py-3 sm:h-[76px] sm:gap-6 sm:py-0">
         <button className="grid h-10 w-10 place-items-center lg:hidden" onClick={() => setOpen(!open)} aria-label="Menu">{open ? <X size={21}/> : <Menu size={21}/>}</button>
-        <Link href="/" className="display text-2xl font-semibold tracking-[-.07em] sm:text-[29px]">Emmaashop<span className="text-[var(--olive)]">.</span></Link>
+        <Link href="/" onClick={forgetHomeView} className="display text-2xl font-semibold tracking-[-.07em] sm:text-[29px]">Emmaashop<span className="text-[var(--olive)]">.</span></Link>
         <nav className="hidden lg:flex items-center gap-8 text-[11px] font-bold uppercase tracking-[.12em]">
           <Link className="hover:text-[var(--olive)] transition-colors" href="/#nouveautes">Nouveautés</Link>
           <Link className="hover:text-[var(--olive)] transition-colors" href="/#collections">Collections</Link>
@@ -35,7 +36,7 @@ export function ShopHeader() {
 
 export function ShopFooter() {
   return <footer className="bg-[var(--ink)] text-white mt-24"><div className="container-shop py-14 grid gap-12 md:grid-cols-[1.4fr_1fr_1fr_1.3fr]">
-    <div><Link href="/" className="display text-3xl">Emmaashop<span className="text-[var(--sand)]">.</span></Link><p className="text-white/55 text-sm leading-6 mt-5 max-w-xs">L’élégance africaine pensée pour aujourd’hui. Des pièces qui racontent une histoire, faites pour durer.</p></div>
+    <div><Link href="/" onClick={forgetHomeView} className="display text-3xl">Emmaashop<span className="text-[var(--sand)]">.</span></Link><p className="text-white/55 text-sm leading-6 mt-5 max-w-xs">L’élégance africaine pensée pour aujourd’hui. Des pièces qui racontent une histoire, faites pour durer.</p></div>
     <div><p className="eyebrow !text-white/45 mb-5">Boutique</p><div className="grid gap-3 text-sm text-white/75"><Link href="/#nouveautes">Nouveautés</Link><Link href="/#collections">Collections</Link><Link href="/notre-histoire">Notre histoire</Link><Link href="/cart">Mon panier</Link></div></div>
     <div><p className="eyebrow !text-white/45 mb-5">Aide</p><div className="grid gap-3 text-sm text-white/75"><Link href="/livraison-retours">Livraison & retours</Link><Link href="/guide-des-tailles">Guide des tailles</Link><a href="mailto:contact@emmaashop.fr">Nous contacter</a><Link href="/cgv">Conditions de vente</Link></div></div>
     <div><p className="eyebrow !text-white/45 mb-5">La newsletter</p><p className="text-sm text-white/60 leading-6 mb-4">Recevez nos nouveautés et nos histoires de style.</p><div className="flex border-b border-white/30 pb-2"><input className="bg-transparent outline-none text-sm flex-1 placeholder:text-white/40" placeholder="Votre adresse e-mail"/><button aria-label="S’inscrire"><ArrowRight size={18}/></button></div></div>

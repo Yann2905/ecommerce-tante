@@ -11,6 +11,7 @@ import heroAfrica from '@/public/hero/hero-africa.jpg';
 import tanteDetouree from '@/public/tante-detouree.png';
 import matante from '@/public/matante.jpg';
 import { ProductCard, ShopFooter, ShopHeader } from '@/components/ShopChrome';
+import { readHomeView, saveHomeView } from '@/lib/home-scroll';
 
 export default function Home() {
   const [products, setProducts] = useState<any[]>([]);
@@ -18,6 +19,44 @@ export default function Home() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('Tout');
   useEffect(() => { fetch('/api/products').then((response) => { if (!response.ok) throw new Error('Catalogue indisponible'); return response.json(); }).then((data) => setProducts(data || [])).catch(() => setProducts([])).finally(() => setLoading(false)); }, []);
+
+  // Restauration de la vue précédente : une seule fois, après l'affichage du
+  // catalogue. Avant cela la grille est vide et la page n'a aucune hauteur.
+  const [viewReady, setViewReady] = useState(false);
+  useEffect(() => {
+    if (loading || viewReady) return;
+    // Une ancre explicite dans l'URL (/#nouveautes) exprime une intention : elle
+    // prime sur la position mémorisée.
+    const anchored = Boolean(window.location.hash);
+    const saved = anchored ? null : readHomeView();
+    if (!saved) {
+      // Sans vue mémorisée, on repart du haut : le lien retour de la fiche produit
+      // utilise scroll={false} et laisserait sinon le décalage de la page quittée.
+      if (!anchored) window.scrollTo(0, 0);
+      setViewReady(true);
+      return;
+    }
+    setQuery(saved.query);
+    setCategory(saved.category);
+    // Deux frames : la première laisse React réappliquer les filtres, la seconde
+    // laisse le navigateur mesurer la grille avant qu'on repositionne.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      window.scrollTo(0, saved.scrollY);
+      setViewReady(true);
+    }));
+  }, [loading, viewReady]);
+
+  // Mémorisation continue, seulement une fois la restauration terminée : sinon
+  // on écraserait la position enregistrée par le 0 du premier rendu.
+  useEffect(() => {
+    if (!viewReady) return;
+    let frame = 0;
+    const remember = () => saveHomeView({ scrollY: window.scrollY, query, category });
+    const onScroll = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(remember); };
+    remember();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { cancelAnimationFrame(frame); window.removeEventListener('scroll', onScroll); };
+  }, [viewReady, query, category]);
   const categories = useMemo(() => ['Tout', ...Array.from(new Set(products.map((p) => p.categories?.name || p.category).filter(Boolean)))], [products]);
   const filtered = products.filter((p) => (category === 'Tout' || (p.categories?.name || p.category) === category) && `${p.name} ${p.description || ''}`.toLowerCase().includes(query.toLowerCase()));
   return <div><ShopHeader/><main>
