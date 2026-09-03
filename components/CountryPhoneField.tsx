@@ -13,7 +13,7 @@ export default function CountryPhoneField({ country, phone, onCountryChange, onP
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const selected = countries.find((item) => item.code === country) || countries.find((item) => item.code === 'FR')!;
-  const filtered = useMemo(() => countries.filter((item) => `${item.name} ${item.dial} ${item.code}`.toLowerCase().includes(query.toLowerCase())).slice(0, 80), [query]);
+  const filtered = useMemo(() => countries.filter((item) => `${item.name} ${item.dial} ${item.code}`.toLowerCase().includes(query.toLowerCase())), [query]);
   const parsed = phone ? parsePhoneNumberFromString(phone, country) : null;
   const invalid = Boolean(phone && (!parsed || !parsed.isValid()));
 
