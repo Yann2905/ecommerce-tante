@@ -80,18 +80,10 @@ export default function ProductCarousel({ products, eyebrow, title }: { products
           <p className="eyebrow">{eyebrow}</p>
           <h2 className="display mt-3 text-3xl md:text-4xl">{title}</h2>
         </div>
-        <div className="hidden shrink-0 gap-2 md:flex">
-          <button type="button" onClick={() => scrollByPage(-1)} disabled={!canScrollLeft} aria-label="Voir les articles précédents"
-            className="grid h-10 w-10 place-items-center border border-[var(--line)] transition hover:border-[var(--ink)] disabled:opacity-30 disabled:hover:border-[var(--line)]">
-            <ChevronLeft size={18} />
-          </button>
-          <button type="button" onClick={() => scrollByPage(1)} disabled={!canScrollRight} aria-label="Voir les articles suivants"
-            className="grid h-10 w-10 place-items-center border border-[var(--line)] transition hover:border-[var(--ink)] disabled:opacity-30 disabled:hover:border-[var(--line)]">
-            <ChevronRight size={18} />
-          </button>
-        </div>
       </div>
 
+      {/* Enveloppe positionnée : les flèches ne doivent pas défiler avec la rangée. */}
+      <div className="relative mt-8">
       <div
         ref={trackRef}
         onScroll={refreshArrows}
@@ -100,13 +92,31 @@ export default function ProductCarousel({ products, eyebrow, title }: { products
         onPointerUp={endDrag}
         onPointerLeave={endDrag}
         onClickCapture={onClickCapture}
-        className="scrollbar-hide mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-2 md:gap-6"
+        className="scrollbar-hide flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-2 md:gap-6"
       >
         {products.map((product) => (
           <div key={product.id} className="w-[46%] shrink-0 snap-start sm:w-[31%] md:w-[23%] lg:w-[19%]">
             <ProductCard product={product} />
           </div>
         ))}
+      </div>
+
+      {/* Même vocabulaire visuel que les flèches de la galerie photo, plus haut sur
+          la page. Elles disparaissent au bout de la liste plutôt que de rester
+          grisées : rien ne masque une image quand ça ne sert à rien. Le calage
+          vertical vise la photo, pas la carte entière, pour épargner nom et prix. */}
+      {canScrollLeft && (
+        <button type="button" onClick={() => scrollByPage(-1)} aria-label="Voir les articles précédents"
+          className="absolute left-2 top-1/3 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-[var(--ink)] shadow-md transition hover:bg-white">
+          <ChevronLeft size={19} />
+        </button>
+      )}
+      {canScrollRight && (
+        <button type="button" onClick={() => scrollByPage(1)} aria-label="Voir les articles suivants"
+          className="absolute right-2 top-1/3 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-[var(--ink)] shadow-md transition hover:bg-white">
+          <ChevronRight size={19} />
+        </button>
+      )}
       </div>
     </section>
   );
